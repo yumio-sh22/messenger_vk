@@ -49,6 +49,11 @@ def app_page() -> FileResponse:
     return FileResponse("app/static/index.html")
 
 
+@app.get("/profile", include_in_schema=False)
+def profile_page() -> FileResponse:
+    return FileResponse("app/static/index.html")
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}

@@ -50,6 +50,12 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(80), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.writer)
+    display_name: Mapped[str | None] = mapped_column(String(120))
+    avatar_url: Mapped[str | None] = mapped_column(Text)
+    city: Mapped[str | None] = mapped_column(String(120))
+    age: Mapped[int | None] = mapped_column(Integer)
+    status_text: Mapped[str | None] = mapped_column(String(160))
+    is_online: Mapped[bool] = mapped_column(Boolean, default=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -105,6 +111,22 @@ class Message(Base):
     sender: Mapped[User] = relationship(back_populates="messages")
     reactions: Mapped[list["Reaction"]] = relationship(back_populates="message", cascade="all, delete-orphan")
     attachments: Mapped[list["Attachment"]] = relationship(back_populates="message", cascade="all, delete-orphan")
+    read_receipts: Mapped[list["MessageReadReceipt"]] = relationship(
+        back_populates="message",
+        cascade="all, delete-orphan",
+    )
+
+
+class MessageReadReceipt(Base):
+    __tablename__ = "message_read_receipts"
+    __table_args__ = (UniqueConstraint("message_id", "user_id", name="uq_message_read_receipt"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    message_id: Mapped[int] = mapped_column(ForeignKey("messages.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    read_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    message: Mapped[Message] = relationship(back_populates="read_receipts")
 
 
 class FavoriteMessage(Base):

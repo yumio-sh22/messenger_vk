@@ -26,15 +26,42 @@ class UserRead(BaseModel):
     email: EmailStr
     username: str
     role: UserRole
+    display_name: str | None = None
+    avatar_url: str | None = None
+    city: str | None = None
+    age: int | None = None
+    status_text: str | None = None
+    is_online: bool = True
     is_active: bool
     created_at: datetime
 
     model_config = {"from_attributes": True}
 
 
+class UserProfileUpdate(BaseModel):
+    display_name: str | None = Field(default=None, max_length=120)
+    avatar_url: str | None = Field(default=None, max_length=2_000_000)
+    city: str | None = Field(default=None, max_length=120)
+    age: int | None = Field(default=None, ge=0, le=130)
+    status_text: str | None = Field(default=None, max_length=160)
+    is_online: bool = True
+
+
+class UserPresenceUpdate(BaseModel):
+    is_online: bool
+
+
 class ChatMemberCreate(BaseModel):
     user_id: int
     role: MemberRole = MemberRole.member
+
+
+class ChatMemberRead(BaseModel):
+    user_id: int
+    username: str
+    email: EmailStr
+    role: MemberRole
+    joined_at: datetime
 
 
 class ChatCreate(BaseModel):
@@ -49,6 +76,11 @@ class ChatRead(BaseModel):
     type: ChatType
     created_by_id: int
     created_at: datetime
+    last_message_body: str | None = None
+    last_message_sender_id: int | None = None
+    last_message_sender_name: str | None = None
+    last_message_status: MessageStatus | None = None
+    last_message_created_at: datetime | None = None
 
     model_config = {"from_attributes": True}
 
@@ -66,9 +98,13 @@ class MessageRead(BaseModel):
     id: int
     chat_id: int
     sender_id: int
+    sender_name: str | None = None
+    sender_username: str | None = None
     reply_to_message_id: int | None = None
     body: str
     status: MessageStatus
+    read_by_count: int = 0
+    chat_member_count: int = 0
     is_deleted: bool = False
     created_at: datetime
     edited_at: datetime | None = None
