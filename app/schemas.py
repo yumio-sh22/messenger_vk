@@ -14,6 +14,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     username: str = Field(min_length=3, max_length=80)
     password: str = Field(min_length=8, max_length=128)
+    role: UserRole = UserRole.writer
 
 
 class UserLogin(BaseModel):
@@ -60,6 +61,7 @@ class ChatMemberRead(BaseModel):
     user_id: int
     username: str
     email: EmailStr
+    app_role: UserRole
     role: MemberRole
     joined_at: datetime
 
@@ -101,10 +103,16 @@ class MessageRead(BaseModel):
     sender_name: str | None = None
     sender_username: str | None = None
     reply_to_message_id: int | None = None
+    source_chat_id: int | None = None
+    source_message_id: int | None = None
+    source_chat_title: str | None = None
+    source_sender_name: str | None = None
+    is_forwarded: bool = False
     body: str
     status: MessageStatus
     read_by_count: int = 0
     chat_member_count: int = 0
+    is_favorite: bool = False
     is_deleted: bool = False
     created_at: datetime
     edited_at: datetime | None = None

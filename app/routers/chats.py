@@ -68,13 +68,18 @@ def chat_preview(db: Session, chat: Chat) -> ChatRead:
 
     message, sender = row
     member_count = db.scalar(select(func.count(ChatMember.id)).where(ChatMember.chat_id == chat.id)) or 0
+    last_body = message.body
+    if chat.title == "Избранное" and message.reply_to_message_id:
+        source_body = db.scalar(select(Message.body).where(Message.id == message.reply_to_message_id))
+        if source_body:
+            last_body = source_body
     return ChatRead(
         id=chat.id,
         title=chat.title,
         type=chat.type,
         created_by_id=chat.created_by_id,
         created_at=chat.created_at,
-        last_message_body="Сообщение удалено" if message.is_deleted else message.body,
+        last_message_body="Сообщение удалено" if message.is_deleted else last_body,
         last_message_sender_id=message.sender_id,
         last_message_sender_name=sender_label(sender, message.sender_id),
         last_message_status=message_status(db, message, member_count),
@@ -154,6 +159,7 @@ def list_members(
             user_id=member.user_id,
             username=member_user.username,
             email=member_user.email,
+            app_role=member_user.role,
             role=member.role,
             joined_at=member.joined_at,
         )
@@ -193,6 +199,7 @@ def add_member(
         user_id=member.user_id,
         username=member_user.username,
         email=member_user.email,
+        app_role=member_user.role,
         role=member.role,
         joined_at=member.joined_at,
     )
