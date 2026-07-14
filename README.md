@@ -1,6 +1,6 @@
-# Messenger Case 1
+# Messenger_Case
 
-Готовый MVP мессенджера для кейса №1: сервер и клиент для быстрого обмена сообщениями с авторизацией, чатами и поиском по сообщениям.
+MVP мессенджера для кейса №1: сервер и клиент для быстрого обмена сообщениями с авторизацией, чатами и поиском по сообщениям.
 
 ## Что реализовано
 
@@ -64,20 +64,6 @@ Password123!
 - `writer@example.com` - роль `writer`.
 - `reader@example.com` - роль `reader`.
 
-## CLI-клиент
-
-После запуска сервера:
-
-```bash
-python -m client.cli register alice@example.com alice Password123!
-python -m client.cli login alice@example.com Password123!
-python -m client.cli chats
-python -m client.cli create-chat "Project chat" --member writer@example.com
-python -m client.cli send 1 "Привет!"
-python -m client.cli search "Привет"
-python -m client.cli listen 1
-```
-
 ## Основные эндпоинты
 
 - `POST /api/auth/register` - регистрация.
@@ -93,7 +79,7 @@ python -m client.cli listen 1
 - `POST /api/messages/{message_id}/attachments` - добавить вложение.
 - `WS /ws/chats/{chat_id}?token=...` - живой канал сообщений.
 
-## Материалы для защиты
+## Материалы проекта
 
 - `docs/report.md` - отчет по проекту.
 - `docs/er_diagram.md` - ER-диаграмма Mermaid.
@@ -102,4 +88,3 @@ python -m client.cli listen 1
 - `docs/api.md` - описание API.
 - `docs/sql_queries.md` - SQL-запросы с JOIN, GROUP BY и подзапросами.
 - `docs/demo_scenarios.md` - сценарии демонстрации.
-- `docs/contribution.md` - описание вклада участников.
