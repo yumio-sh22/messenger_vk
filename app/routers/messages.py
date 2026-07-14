@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.audit import write_audit
 from app.config import settings
 from app.database import SessionLocal, get_db
-from app.deps import get_current_user, require_chat_member, require_writer
+from app.deps import get_current_user, require_chat_member
 from app.models import (
     Attachment,
     Chat,
@@ -21,7 +21,6 @@ from app.models import (
     MessageStatus,
     Reaction,
     User,
-    UserRole,
 )
 from app.schemas import AttachmentCreate, MessageCreate, MessageRead, MessageUpdate, ReactionCreate
 from app.security import decode_access_token
@@ -29,6 +28,7 @@ from app.ws import manager
 
 router = APIRouter(tags=["messages"])
 send_windows: dict[int, deque[datetime]] = defaultdict(deque)
+SAVED_CHAT_TITLE = "\u0418\u0437\u0431\u0440\u0430\u043d\u043d\u043e\u0435"
 
 
 def check_rate_limit(user_id: int) -> None:
@@ -37,34 +37,52 @@ def check_rate_limit(user_id: int) -> None:
     while window and now - window[0] > timedelta(minutes=1):
         window.popleft()
     if len(window) >= settings.rate_limit_messages_per_minute:
-        raise HTTPException(status_code=429, detail="Message rate limit exceeded")
+        raise HTTPException(status_code=429, detail="Слишком много сообщений за минуту. Попробуйте немного позже")
     window.append(now)
 
 
 def ensure_can_write(member: ChatMember) -> None:
     if member.role == MemberRole.readonly:
-        raise HTTPException(status_code=403, detail="Readonly chat member cannot send messages")
+        raise HTTPException(status_code=403, detail="В этом чате у вас доступ только на чтение")
 
 
 def get_saved_chat(db: Session, user: User) -> Chat:
-    chat = db.scalar(
-        select(Chat)
-        .join(ChatMember)
-        .where(ChatMember.user_id == user.id, Chat.title == "Избранное", Chat.created_by_id == user.id)
-    )
+    chat = find_saved_chat(db, user)
     if chat:
         return chat
-    chat = Chat(title="Избранное", type=ChatType.direct, created_by_id=user.id)
+    chat = Chat(title=SAVED_CHAT_TITLE, type=ChatType.direct, created_by_id=user.id)
     db.add(chat)
     db.flush()
     db.add(ChatMember(chat_id=chat.id, user_id=user.id, role=MemberRole.owner))
     return chat
 
 
-def public_message(message: Message) -> Message:
-    if message.is_deleted:
-        message.body = "Сообщение удалено"
-    return message
+def find_saved_chat(db: Session, user: User) -> Chat | None:
+    return db.scalar(
+        select(Chat)
+        .join(ChatMember)
+        .where(ChatMember.user_id == user.id, Chat.title == SAVED_CHAT_TITLE, Chat.created_by_id == user.id)
+    )
+
+
+def is_saved_chat(chat: Chat | None) -> bool:
+    return bool(chat and chat.title == SAVED_CHAT_TITLE)
+
+
+def remove_favorite_copy(db: Session, user: User, source_message_id: int) -> None:
+    favorite = db.scalar(
+        select(FavoriteMessage).where(FavoriteMessage.user_id == user.id, FavoriteMessage.message_id == source_message_id)
+    )
+    if favorite:
+        db.delete(favorite)
+    saved_chat = find_saved_chat(db, user)
+    if not saved_chat:
+        return
+    saved_copies = db.scalars(
+        select(Message).where(Message.chat_id == saved_chat.id, Message.reply_to_message_id == source_message_id)
+    ).all()
+    for saved_copy in saved_copies:
+        db.delete(saved_copy)
 
 
 def sender_label(sender: User | None, fallback_id: int) -> str:
@@ -119,7 +137,9 @@ def message_read(
     source_chat_id: int | None = None,
     source_message_id: int | None = None,
     source_chat_title: str | None = None,
+    source_sender_id: int | None = None,
     source_sender_name: str | None = None,
+    source_sender_avatar_url: str | None = None,
 ) -> MessageRead:
     return MessageRead(
         id=message.id,
@@ -127,13 +147,16 @@ def message_read(
         sender_id=message.sender_id,
         sender_name=sender_label(sender, message.sender_id),
         sender_username=sender.username if sender else None,
+        sender_avatar_url=sender.avatar_url if sender else None,
         reply_to_message_id=message.reply_to_message_id,
         source_chat_id=source_chat_id,
         source_message_id=source_message_id,
         source_chat_title=source_chat_title,
+        source_sender_id=source_sender_id,
         source_sender_name=source_sender_name,
+        source_sender_avatar_url=source_sender_avatar_url,
         is_forwarded=bool(source_chat_title),
-        body="Сообщение удалено" if message.is_deleted else body_override or message.body,
+        body=body_override or message.body,
         status=computed_status(message, read_by_count, member_count),
         read_by_count=read_by_count,
         chat_member_count=member_count,
@@ -161,10 +184,10 @@ def mark_read(db: Session, user_id: int, messages: list[Message]) -> None:
             db.add(MessageReadReceipt(message_id=message_id, user_id=user_id))
 
 
-def favorite_source_meta(db: Session, messages: list[Message]) -> dict[int, tuple[str, int, int, str, str]]:
+def favorite_source_meta(db: Session, messages: list[Message]) -> dict[int, tuple[str, int, int, str, int, str, str | None]]:
     chat_ids = {message.chat_id for message in messages}
     saved_chat_ids = set(
-        db.scalars(select(Chat.id).where(Chat.id.in_(chat_ids), Chat.title == "Избранное"))
+        db.scalars(select(Chat.id).where(Chat.id.in_(chat_ids), Chat.title == SAVED_CHAT_TITLE))
     )
     candidates = [message for message in messages if message.chat_id in saved_chat_ids and message.reply_to_message_id]
     if not candidates:
@@ -177,7 +200,7 @@ def favorite_source_meta(db: Session, messages: list[Message]) -> dict[int, tupl
         .where(Message.id.in_(parent_ids))
     ).all()
     sources = {
-        message_id: (body, chat_id, message_id, title, sender_label(sender, sender.id))
+        message_id: (body, chat_id, message_id, title, sender.id, sender_label(sender, sender.id), sender.avatar_url)
         for message_id, body, chat_id, title, sender in rows
     }
     meta = {}
@@ -213,11 +236,13 @@ def serialize_messages(
             counts.get(message.id, 0),
             member_counts.get(message.chat_id, 0),
             message.id in favorites,
-            source_meta.get(message.id, (None, None, None, None, None))[0],
-            source_meta.get(message.id, (None, None, None, None, None))[1],
-            source_meta.get(message.id, (None, None, None, None, None))[2],
-            source_meta.get(message.id, (None, None, None, None, None))[3],
-            source_meta.get(message.id, (None, None, None, None, None))[4],
+            source_meta.get(message.id, (None, None, None, None, None, None, None))[0],
+            source_meta.get(message.id, (None, None, None, None, None, None, None))[1],
+            source_meta.get(message.id, (None, None, None, None, None, None, None))[2],
+            source_meta.get(message.id, (None, None, None, None, None, None, None))[3],
+            source_meta.get(message.id, (None, None, None, None, None, None, None))[4],
+            source_meta.get(message.id, (None, None, None, None, None, None, None))[5],
+            source_meta.get(message.id, (None, None, None, None, None, None, None))[6],
         )
         for message, sender in rows
     ]
@@ -233,9 +258,9 @@ def serialize_message(
     counts = receipt_counts(db, [message.id])
     favorites = favorite_message_ids(db, current_user_id, [message.id])
     source_meta = favorite_source_meta(db, [message])
-    source_body, source_chat_id, source_message_id, source_chat_title, source_sender_name = source_meta.get(
+    source_body, source_chat_id, source_message_id, source_chat_title, source_sender_id, source_sender_name, source_sender_avatar_url = source_meta.get(
         message.id,
-        (None, None, None, None, None),
+        (None, None, None, None, None, None, None),
     )
     return message_read(
         message,
@@ -247,7 +272,9 @@ def serialize_message(
         source_chat_id,
         source_message_id,
         source_chat_title,
+        source_sender_id,
         source_sender_name,
+        source_sender_avatar_url,
     )
 
 
@@ -263,19 +290,35 @@ def list_messages(
     require_chat_member(db, chat_id, user)
     anchor = db.get(Message, anchor_id) if anchor_id else None
     if anchor_id and (not anchor or anchor.chat_id != chat_id):
-        raise HTTPException(status_code=404, detail="Source message not found")
+        raise HTTPException(status_code=404, detail="Исходное сообщение не найдено")
     before = db.get(Message, before_id) if before_id else None
     if before_id and (not before or before.chat_id != chat_id):
-        raise HTTPException(status_code=404, detail="Message page boundary not found")
-    query = (
+        raise HTTPException(status_code=404, detail="Граница страницы сообщений не найдена")
+    base_query = (
         select(Message, User)
         .join(User, User.id == Message.sender_id)
         .where(Message.chat_id == chat_id)
-        .order_by(Message.created_at.desc())
-        .limit(limit)
+        .where(Message.is_deleted.is_(False))
     )
     if anchor:
-        query = query.where(Message.created_at <= anchor.created_at)
+        newer_rows = db.execute(
+            base_query
+            .where(Message.created_at >= anchor.created_at)
+            .order_by(Message.created_at.asc(), Message.id.asc())
+            .limit(limit)
+        ).all()
+        remaining = max(limit - len(newer_rows), 0)
+        older_rows = []
+        if remaining:
+            older_rows = db.execute(
+                base_query
+                .where(Message.created_at < anchor.created_at)
+                .order_by(Message.created_at.desc(), Message.id.desc())
+                .limit(remaining)
+            ).all()
+        rows = list(reversed(older_rows)) + newer_rows
+        return serialize_messages(db, rows, mark_read_user_id=user.id, current_user_id=user.id)
+    query = base_query.order_by(Message.created_at.desc(), Message.id.desc()).limit(limit)
     if before:
         query = query.where(Message.created_at < before.created_at)
     rows = list(reversed(db.execute(query).all()))
@@ -290,18 +333,13 @@ async def send_message(
     db: Session = Depends(get_db),
 ) -> MessageRead:
     member = require_chat_member(db, chat_id, user)
-    chat = db.get(Chat, chat_id)
-    if user.role == UserRole.reader and (not chat or chat.title != "Избранное"):
-        raise HTTPException(status_code=403, detail="Reader can send messages only in favorites")
-    if user.role not in (UserRole.writer, UserRole.admin, UserRole.reader):
-        raise HTTPException(status_code=403, detail="Write permission required")
     ensure_can_write(member)
     check_rate_limit(user.id)
 
     if payload.reply_to_message_id:
         parent = db.get(Message, payload.reply_to_message_id)
         if not parent or parent.chat_id != chat_id:
-            raise HTTPException(status_code=404, detail="Reply message not found in this chat")
+            raise HTTPException(status_code=404, detail="Сообщение для ответа не найдено в этом чате")
 
     message = Message(
         chat_id=chat_id,
@@ -341,6 +379,7 @@ def search_messages(
         .join(User, User.id == Message.sender_id)
         .join(ChatMember, ChatMember.chat_id == Message.chat_id)
         .where(ChatMember.user_id == user.id)
+        .where(ChatMember.is_hidden.is_(False))
         .where(Message.is_deleted.is_(False))
         .where(or_(Message.body.ilike(pattern), func.similarity(Message.body, q) > 0.2))
         .order_by(Message.created_at.desc())
@@ -362,19 +401,16 @@ async def edit_message(
 ) -> MessageRead:
     message = db.get(Message, message_id)
     if not message:
-        raise HTTPException(status_code=404, detail="Message not found")
-    require_chat_member(db, message.chat_id, user)
+        raise HTTPException(status_code=404, detail="Сообщение не найдено")
+    member = require_chat_member(db, message.chat_id, user)
     chat = db.get(Chat, message.chat_id)
-    if user.role == UserRole.reader and (not chat or chat.title != "Избранное"):
-        raise HTTPException(status_code=403, detail="Reader can edit messages only in favorites")
-    if user.role not in (UserRole.writer, UserRole.admin, UserRole.reader):
-        raise HTTPException(status_code=403, detail="Write permission required")
+    ensure_can_write(member)
     if message.sender_id != user.id:
-        raise HTTPException(status_code=403, detail="Only sender can edit message")
+        raise HTTPException(status_code=403, detail="Редактировать можно только свои сообщения")
     if message.is_deleted:
-        raise HTTPException(status_code=400, detail="Deleted message cannot be edited")
+        raise HTTPException(status_code=400, detail="Удалённое сообщение нельзя редактировать")
     if chat and chat.title == "Избранное" and message.reply_to_message_id:
-        raise HTTPException(status_code=400, detail="Forwarded favorite messages cannot be edited")
+        raise HTTPException(status_code=400, detail="Пересланные сообщения в избранном нельзя редактировать")
 
     message.body = payload.body
     message.edited_at = datetime.now(UTC)
@@ -397,17 +433,20 @@ async def delete_message(
 ) -> None:
     message = db.get(Message, message_id)
     if not message:
-        raise HTTPException(status_code=404, detail="Message not found")
-    require_chat_member(db, message.chat_id, user)
+        raise HTTPException(status_code=404, detail="Сообщение не найдено")
+    member = require_chat_member(db, message.chat_id, user)
     chat = db.get(Chat, message.chat_id)
-    if user.role == UserRole.reader and (not chat or chat.title != "Избранное"):
-        raise HTTPException(status_code=403, detail="Reader can delete messages only in favorites")
+    if message.sender_id != user.id and member.role != MemberRole.owner:
+        raise HTTPException(status_code=403, detail="Удалить сообщение может только автор или админ группы")
 
-    message.is_deleted = True
-    message.body = "Сообщение удалено"
+    deleted_chat_id = message.chat_id
+    if is_saved_chat(chat) and message.reply_to_message_id:
+        remove_favorite_copy(db, user, message.reply_to_message_id)
+    else:
+        db.delete(message)
     write_audit(db, user.id, "delete_message", "message", message.id)
     db.commit()
-    await manager.broadcast(message.chat_id, {"event": "message.deleted", "message_id": message.id})
+    await manager.broadcast(deleted_chat_id, {"event": "message.deleted", "message_id": message.id})
 
 
 @router.post("/api/messages/{message_id}/favorite", response_model=MessageRead, status_code=status.HTTP_201_CREATED)
@@ -418,19 +457,19 @@ def add_to_favorites(
 ) -> MessageRead:
     message = db.get(Message, message_id)
     if not message or message.is_deleted:
-        raise HTTPException(status_code=404, detail="Message not found")
+        raise HTTPException(status_code=404, detail="Сообщение не найдено")
     require_chat_member(db, message.chat_id, user)
 
     source_chat = db.get(Chat, message.chat_id)
     saved_chat = get_saved_chat(db, user)
     if source_chat and source_chat.id == saved_chat.id:
-        raise HTTPException(status_code=400, detail="Message is already in favorites")
+        raise HTTPException(status_code=400, detail="Сообщение уже находится в избранном")
 
     exists = db.scalar(
         select(FavoriteMessage).where(FavoriteMessage.user_id == user.id, FavoriteMessage.message_id == message_id)
     )
     if exists:
-        raise HTTPException(status_code=409, detail="Message is already in favorites")
+        raise HTTPException(status_code=409, detail="Сообщение уже находится в избранном")
     db.add(FavoriteMessage(user_id=user.id, message_id=message_id))
 
     saved_copy = Message(
@@ -449,6 +488,21 @@ def add_to_favorites(
     return serialize_message(db, saved_copy, user, current_user_id=user.id)
 
 
+@router.delete("/api/messages/{message_id}/favorite", status_code=status.HTTP_204_NO_CONTENT)
+def remove_from_favorites(
+    message_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    message = db.get(Message, message_id)
+    if not message or message.is_deleted:
+        raise HTTPException(status_code=404, detail="Сообщение не найдено")
+    require_chat_member(db, message.chat_id, user)
+    remove_favorite_copy(db, user, message_id)
+    write_audit(db, user.id, "unfavorite_message", "message", message.id)
+    db.commit()
+
+
 @router.post("/api/messages/{message_id}/reactions", status_code=status.HTTP_201_CREATED)
 def add_reaction(
     message_id: int,
@@ -458,7 +512,7 @@ def add_reaction(
 ) -> dict[str, str]:
     message = db.get(Message, message_id)
     if not message:
-        raise HTTPException(status_code=404, detail="Message not found")
+        raise HTTPException(status_code=404, detail="Сообщение не найдено")
     require_chat_member(db, message.chat_id, user)
 
     exists = db.scalar(
@@ -479,7 +533,7 @@ def add_reaction(
 def add_attachment(
     message_id: int,
     payload: AttachmentCreate,
-    user: User = Depends(require_writer),
+    user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict[str, str]:
     message = db.get(Message, message_id)

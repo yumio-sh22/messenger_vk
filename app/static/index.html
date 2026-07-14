@@ -148,6 +148,7 @@
     .message:hover { transform: translateY(-2px); border-color: #bfdbfe; box-shadow: 0 16px 32px rgba(24,32,47,.09); }
     .message.mine { border-color: #bfdbfe; background: linear-gradient(145deg, rgba(239,246,255,.98), rgba(219,234,254,.92)); margin-left: auto; border-radius: 20px 20px 8px 20px; }
     .message.menu-open { border-color: #93c5fd; box-shadow: 0 18px 38px rgba(37,99,235,.15); }
+    .message.source-highlight { animation: sourcePulse 1s ease both; border-color: #8b5cf6 !important; box-shadow: 0 0 0 4px rgba(139,92,246,.18), 0 20px 46px rgba(109,40,217,.22) !important; }
     .message.deleted { opacity: .68; font-style: italic; }
     .meta { color: var(--muted); font-size: 12px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .sender-name { color: #475569; font-weight: 800; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -173,6 +174,12 @@
     .composer .composer-row input { min-height: 48px; border-radius: 16px; box-shadow: inset 0 1px 0 rgba(255,255,255,.75), 0 8px 18px rgba(24,32,47,.045); }
     .composer .primary { min-height: 48px; border-radius: 16px; }
     .notice { min-height: 18px; margin-top: 10px; font-size: 13px; }
+    .field-hint { min-height: 18px; margin: 5px 0 8px; color: var(--muted); font-size: 12px; line-height: 1.35; }
+    .field-hint.error { color: var(--danger); font-weight: 700; }
+    @keyframes sourcePulse {
+      0%, 100% { transform: translateY(0) scale(1); }
+      40% { transform: translateY(-2px) scale(1.012); }
+    }
     .error { color: var(--danger); }
     .ok { color: var(--ok); }
     .toast-stack { position: fixed; right: 22px; bottom: 22px; z-index: 80; display: grid; gap: 10px; width: min(360px, calc(100vw - 32px)); pointer-events: none; }
@@ -183,7 +190,9 @@
     .empty { height: 100%; display: grid; place-items: center; color: var(--muted); text-align: center; }
     .modal-backdrop { position: fixed; inset: 0; display: none; place-items: center; padding: 18px; background: rgba(15,23,42,.24); z-index: 20; }
     .modal-backdrop.open { display: grid; }
-    .modal { width: min(430px,100%); border-radius: 18px; background: white; border: 1px solid var(--line); box-shadow: var(--shadow); padding: 18px; }
+    .modal { position: relative; width: min(430px,100%); border-radius: 18px; background: white; border: 1px solid var(--line); box-shadow: var(--shadow); padding: 18px; }
+    .modal-close { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; min-height: 0; padding: 0; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); font-size: 20px; line-height: 1; }
+    .modal-close:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 8px 18px rgba(109,40,217,.14); }
     .action-menu { position: fixed; z-index: 45; width: 264px; border: 1px solid rgba(191,219,254,.9); border-radius: 18px; padding: 8px; background: rgba(255,255,255,.97); box-shadow: 0 22px 52px rgba(24,32,47,.18); backdrop-filter: blur(16px); opacity: 0; transform: translateY(6px) scale(.98); pointer-events: none; transition: opacity .16s ease, transform .16s ease; }
     .action-menu.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
     .sheet-handle { display: none; }
@@ -212,6 +221,129 @@
     .contact-check { width: 22px; height: 22px; border-radius: 50%; border: 1px solid #bfdbfe; color: var(--accent); display: grid; place-items: center; font-size: 13px; font-weight: 900; background: white; }
     .contact-option:not(.selected) .contact-check { color: transparent; }
     .profile-preview { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 18px; background: var(--accent-soft); margin: 14px 0; }
+    .profile-preview > div:last-child { min-width: 0; }
+    .profile-preview strong, .profile-preview .muted { display: block; overflow-wrap: anywhere; }
+    .chat-card { cursor: pointer; }
+    .chat-delete-button {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      width: 26px;
+      height: 26px;
+      min-height: 0;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid color-mix(in srgb, var(--danger) 22%, var(--line));
+      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      color: var(--danger);
+      opacity: 0;
+      display: grid;
+      place-items: center;
+      font-size: 17px;
+      line-height: 1;
+      box-shadow: none;
+    }
+    .chat-card:hover .chat-delete-button,
+    .chat-delete-button:focus {
+      opacity: 1;
+    }
+    .chat-delete-button:hover {
+      background: rgba(220,38,38,.10);
+      transform: none;
+      box-shadow: 0 8px 18px rgba(220,38,38,.12);
+    }
+    .chat-tool-button.danger {
+      color: var(--danger);
+      border-color: color-mix(in srgb, var(--danger) 24%, var(--line));
+      background: rgba(220,38,38,.07);
+    }
+    .chat-tool-button.danger:hover {
+      background: rgba(220,38,38,.12);
+      box-shadow: 0 14px 28px rgba(220,38,38,.14);
+    }
+    .member-role-badge {
+      display: inline-flex;
+      align-items: center;
+      margin-left: 8px;
+      color: rgba(102,112,133,.72);
+      font-size: 11px;
+      line-height: 1;
+      text-transform: uppercase;
+      vertical-align: baseline;
+    }
+    .file-picker {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      min-height: 46px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.58);
+    }
+    .file-picker-button {
+      min-height: 34px;
+      padding: 0 14px;
+      border-radius: 11px;
+      white-space: nowrap;
+    }
+    .file-picker span {
+      min-width: 0;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 13px;
+    }
+    .visually-hidden-file {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .profile-editor {
+      width: min(420px, 100%);
+      padding: 22px;
+      border-radius: 20px;
+    }
+    .profile-editor h1 {
+      font-size: 26px;
+    }
+    body[data-theme="dark"] .modal {
+      background: #211936;
+      border-color: rgba(196,181,253,.24);
+    }
+    body[data-theme="dark"] .modal-close {
+      background: transparent;
+      border-color: rgba(196,181,253,.44);
+      color: #ddd6fe;
+    }
+    body[data-theme="dark"] .modal-close:hover {
+      background: rgba(196,181,253,.10);
+      border-color: #c4b5fd;
+      color: #f5f3ff;
+    }
+    body[data-theme="dark"] .member-row,
+    body[data-theme="dark"] .contact-option {
+      background: #281f40;
+      border-color: rgba(196,181,253,.22);
+    }
+    body[data-theme="dark"] .member-role-badge {
+      color: rgba(221,214,254,.62);
+    }
+    body[data-theme="dark"] .profile-editor {
+      background: #211936;
+      border-color: rgba(196,181,253,.24);
+    }
+    body[data-theme="dark"] .profile-preview {
+      background: #2d214a;
+    }
+    body[data-theme="dark"] .file-picker {
+      background: #181126;
+      border-color: rgba(196,181,253,.26);
+    }
     body {
       --bg: #f6f2ff;
       --panel: rgba(255,255,255,.86);
@@ -1493,6 +1625,10 @@
     .meta {
       margin-bottom: 8px;
     }
+    .message.mine .meta {
+      justify-content: flex-end;
+      margin-bottom: 3px;
+    }
     .sender-name {
       color: #5b21b6;
     }
@@ -1998,6 +2134,39 @@
       from { opacity: 0; transform: translateY(-4px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    .reply-box {
+      border: 1px solid rgba(109,40,217,.24);
+      background: rgba(245,243,255,.92);
+      color: #4c1d95;
+      box-shadow: 0 10px 24px rgba(79,104,145,.10);
+    }
+    .reply-box #replyText {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: inherit;
+      font-weight: 750;
+    }
+    .reply-box .tiny {
+      background: rgba(109,40,217,.10);
+      border-color: rgba(109,40,217,.20);
+      color: #5b21b6;
+    }
+    body[data-theme="dark"] .reply-box {
+      background: rgba(32,22,58,.96);
+      border-color: rgba(167,139,250,.34);
+      color: #ddd6fe;
+      box-shadow: 0 12px 26px rgba(0,0,0,.22);
+    }
+    body[data-theme="dark"] .reply-box .tiny {
+      background: rgba(167,139,250,.16);
+      border-color: rgba(167,139,250,.28);
+      color: #c4b5fd;
+    }
+    body[data-theme="dark"] .reply-box .tiny:hover {
+      background: rgba(167,139,250,.24);
+    }
     .topbar {
       min-height: 76px;
       padding: 14px 20px;
@@ -2030,8 +2199,17 @@
       margin-bottom: 14px;
       font-size: 14px;
     }
+    .message.source-highlight {
+      border-color: rgba(109,40,217,.72) !important;
+      box-shadow: 0 0 0 4px rgba(109,40,217,.18), 0 18px 42px rgba(109,40,217,.22) !important;
+    }
+    body[data-theme="dark"] .message.source-highlight {
+      border-color: rgba(196,181,253,.88) !important;
+      box-shadow: 0 0 0 4px rgba(196,181,253,.18), 0 18px 44px rgba(124,58,237,.28) !important;
+    }
     .message.mine {
       border-radius: 14px;
+      padding-top: 10px;
     }
     .message-avatar {
       left: -48px;
@@ -2106,6 +2284,123 @@
       .topbar { grid-template-columns: 1fr; }
       .composer-row { grid-template-columns: 1fr; }
     }
+    .chat-card { cursor: pointer; padding-right: 42px; }
+    .chat-delete-button { position: absolute; right: 10px; top: 10px; width: 26px; height: 26px; min-height: 0; padding: 0; border-radius: 50%; display: grid; place-items: center; border: 1px solid color-mix(in srgb, var(--danger) 24%, var(--line)); background: color-mix(in srgb, var(--panel) 88%, transparent); color: var(--danger); opacity: 0; font-size: 17px; line-height: 1; box-shadow: none; }
+    .chat-card:hover .chat-delete-button, .chat-delete-button:focus { opacity: 1; }
+    .chat-delete-button:hover { background: rgba(220,38,38,.10); transform: none; box-shadow: 0 8px 18px rgba(220,38,38,.12); }
+    .chat-tool-button.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 24%, var(--line)); background: rgba(220,38,38,.07); }
+    .chat-tool-button.danger:hover { background: rgba(220,38,38,.12); box-shadow: 0 14px 28px rgba(220,38,38,.14); }
+    .member-role-badge { display: inline-flex; align-items: center; margin-left: 8px; color: rgba(102,112,133,.72); font-size: 11px; line-height: 1; text-transform: uppercase; vertical-align: baseline; }
+    .profile-member-row { grid-template-columns: 42px minmax(0, 1fr); }
+    .file-picker { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; min-height: 46px; padding: 6px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.58); }
+    .file-picker-button { min-height: 34px; padding: 0 14px; border-radius: 11px; white-space: nowrap; }
+    .file-picker span { min-width: 0; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+    .visually-hidden-file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+    .profile-editor { width: min(420px, 100%); padding: 22px; border-radius: 20px; }
+    .profile-editor h1 { font-size: 26px; }
+    body[data-theme="dark"] .modal { background: #211936; border-color: rgba(196,181,253,.24); }
+    body[data-theme="dark"] .modal-close { background: transparent; border-color: rgba(196,181,253,.44); color: #ddd6fe; }
+    body[data-theme="dark"] .modal-close:hover { background: rgba(196,181,253,.10); border-color: #c4b5fd; color: #f5f3ff; }
+    body[data-theme="dark"] .member-row, body[data-theme="dark"] .contact-option { background: #281f40; border-color: rgba(196,181,253,.22); }
+    body[data-theme="dark"] .member-role-badge { color: rgba(221,214,254,.62); }
+    body[data-theme="dark"] .profile-editor { background: #211936; border-color: rgba(196,181,253,.24); }
+    body[data-theme="dark"] .profile-preview { background: #2d214a; }
+    body[data-theme="dark"] .file-picker { background: #181126; border-color: rgba(196,181,253,.26); }
+    .modal-backdrop.open { display: flex; align-items: center; justify-content: center; }
+    .modal { max-height: min(86vh, 760px); overflow: auto; }
+    .choice-actions { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    .primary.danger { background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 16px 30px rgba(220,38,38,.20); }
+    .chat-avatar,
+    .chat-header-avatar,
+    .message-avatar,
+    .contact-avatar,
+    .profile-member-row .contact-avatar {
+      border-radius: 50%;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+    .chat-header-avatar {
+      width: 56px;
+      height: 56px;
+      min-width: 56px;
+      display: grid;
+      place-items: center;
+    }
+    .chat-avatar img,
+    .chat-header-avatar img,
+    .message-avatar img,
+    .contact-avatar img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: inherit;
+    }
+    .profile-info-grid { display: grid; gap: 7px; margin-top: 10px; }
+    .profile-info-row { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+    .profile-info-row span { margin: 0; color: var(--muted); font-size: 12px; }
+    .profile-info-row strong { min-width: 0; color: var(--text); font-size: 13px; overflow-wrap: anywhere; }
+    body[data-theme="dark"] .chat-title,
+    body[data-theme="dark"] .sender-name,
+    body[data-theme="dark"] .account-name,
+    body[data-theme="dark"] .account-detail-row strong,
+    body[data-theme="dark"] .profile-info-row strong {
+      color: #f5f3ff;
+    }
+    body[data-theme="dark"] .account-line,
+    body[data-theme="dark"] .account-detail-row,
+    body[data-theme="dark"] .member-row span,
+    body[data-theme="dark"] .profile-info-row span {
+      color: #c8bff0;
+    }
+    .member-row strong { display: flex; align-items: baseline; gap: 0; flex-wrap: wrap; line-height: 1.15; }
+    .member-role-badge { transform: none; }
+    .message-content-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
+      line-height: 1.42;
+    }
+    .message-text {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+      line-height: 1.42;
+    }
+    .message-content-row .meta-right {
+      margin-left: auto;
+      align-self: flex-end;
+      white-space: nowrap;
+      font-size: 12px;
+      color: var(--muted);
+      opacity: .82;
+      line-height: 1.25;
+    }
+    .message .sender-name {
+      display: block;
+      margin: 0 0 8px;
+      line-height: 1.2;
+    }
+    .message .source-preview {
+      display: inline-flex;
+      width: fit-content;
+      max-width: 100%;
+      margin: 0 0 10px;
+      line-height: 1.15;
+      vertical-align: top;
+    }
+    .message .reply-preview {
+      margin: 0 0 10px;
+      line-height: 1.35;
+    }
+    .message.mine { padding-top: 14px; }
+    .message.mine .sender-name { display: none; }
+    .hidden { display: none !important; }
+    @media (max-width: 760px) {
+      .message-content-row { flex-wrap: wrap; }
+      .message-content-row .meta-right { width: 100%; text-align: right; }
+    }
   </style>
 </head>
 <body>
@@ -2133,12 +2428,6 @@
       <input id="registerUsername" minlength="3" required>
       <label>Пароль</label>
       <input id="registerPassword" type="password" minlength="8" required>
-      <label>Роль</label>
-      <select id="registerRole" required>
-        <option value="writer">Пользователь</option>
-        <option value="reader">Читатель</option>
-        <option value="admin">Админ</option>
-      </select>
       <button class="primary" style="margin-top: 18px;">Зарегистрироваться</button>
       <p class="muted">Уже есть аккаунт? <button type="button" class="link-button" onclick="go('/login')">Войти</button></p>
       <div id="registerNotice" class="notice"></div>
@@ -2157,16 +2446,24 @@
         </div>
       </div>
       <label>Фото профиля</label>
-      <input id="profileAvatarFile" type="file" accept="image/*" onchange="loadAvatarFile(event)">
+      <div class="file-picker">
+        <button type="button" class="secondary file-picker-button" onclick="document.getElementById('profileAvatarFile').click()">Выбрать файл</button>
+        <span id="avatarFileName">Файл не выбран</span>
+      </div>
+      <input id="profileAvatarFile" class="visually-hidden-file" type="file" accept="image/*" onchange="loadAvatarFile(event)">
       <button type="button" class="secondary" style="width:100%; margin-top:8px;" onclick="clearAvatar()">Убрать фото</button>
       <label>Никнейм</label>
-      <input id="profileName" maxlength="120" oninput="refreshProfilePreview()">
+      <input id="profileName" maxlength="40" oninput="validateProfileField(this); refreshProfilePreview()">
+      <div class="field-hint" data-for="profileName">Максимум 40 символов.</div>
       <label>Возраст</label>
-      <input id="profileAge" type="number" min="0" max="130" oninput="refreshProfilePreview()">
+      <input id="profileAge" type="number" min="0" max="200" oninput="validateProfileField(this); refreshProfilePreview()">
+      <div class="field-hint" data-for="profileAge">Возраст должен быть от 0 до 200 лет.</div>
       <label>Город</label>
-      <input id="profileCity" maxlength="120" oninput="refreshProfilePreview()">
+      <input id="profileCity" maxlength="80" oninput="validateProfileField(this); refreshProfilePreview()">
+      <div class="field-hint" data-for="profileCity">Максимум 80 символов.</div>
       <label>Короткий статус</label>
-      <textarea id="profileStatus" maxlength="160" oninput="refreshProfilePreview()" placeholder="Например: на связи"></textarea>
+      <textarea id="profileStatus" maxlength="120" oninput="validateProfileField(this); refreshProfilePreview()" placeholder="Например: на связи"></textarea>
+      <div class="field-hint" data-for="profileStatus">Максимум 120 символов.</div>
       <div class="composer-row" style="grid-template-columns: 1fr 1fr; margin-top: 16px;">
         <button type="button" class="secondary" onclick="go('/app')">Назад</button>
         <button class="primary">Сохранить</button>
@@ -2195,7 +2492,7 @@
 
       <div class="chat-search-panel">
         <span class="search-icon">&#8981;</span>
-        <input id="chatSearch" type="search" placeholder="Поиск по чатам" oninput="renderChats()">
+        <input id="chatSearch" type="search" maxlength="120" placeholder="Поиск по чатам" oninput="scheduleChatSearch()">
       </div>
 
       <div id="menuPanel" class="menu-panel">
@@ -2240,15 +2537,16 @@
         <div class="chat-heading">
           <div id="chatHeaderAvatar" class="chat-header-avatar">M</div>
           <div class="chat-heading-main">
-            <div id="chatName" class="chat-title">Выберите чат</div>
+            <div id="chatName" class="chat-title" onclick="openDirectProfileFromHeader(event)">Выберите чат</div>
             <div id="chatStatus" class="muted"></div>
           </div>
           <div class="chat-tools">
-            <button id="membersButton" class="chat-tool-button hidden" onclick="openMembersModal()">Участники</button>
+            <button id="membersButton" class="chat-tool-button hidden" onclick="openChatInfo(event)">Участники</button>
+            <button id="deleteChatButton" class="chat-tool-button danger hidden" onclick="deleteCurrentChat(event)">Удалить</button>
           </div>
         </div>
         <div class="search-row">
-          <input id="search" placeholder="Поиск в текущем чате" onkeydown="if(event.key === 'Enter') searchMessages()">
+          <input id="search" maxlength="120" placeholder="Поиск в текущем чате" onkeydown="if(event.key === 'Enter') searchMessages()">
           <button id="backFromSearch" class="secondary hidden" onclick="exitSearch()">Назад</button>
         </div>
       </header>
@@ -2256,19 +2554,20 @@
       <footer class="composer">
         <div id="replyBox" class="reply-box"><span id="replyText"></span><button class="tiny" onclick="clearReply()">Отмена</button></div>
         <div class="composer-row">
-          <input id="messageBody" placeholder="Сообщение" onkeydown="if(event.key === 'Enter') sendMessage()">
+          <input id="messageBody" maxlength="5000" placeholder="Сообщение" onkeydown="if(event.key === 'Enter') sendMessage()">
           <button id="sendMessageButton" class="primary" onclick="sendMessage()">Отправить</button>
         </div>
       </footer>
     </main>
   </div>
 
-  <div id="chatModalBackdrop" class="modal-backdrop">
+  <div id="chatModalBackdrop" class="modal-backdrop" onclick="if(event.target === this) closeChatModal()">
     <form class="modal" onsubmit="createChat(event)">
+      <button type="button" class="modal-close" onclick="closeChatModal()" aria-label="Закрыть">×</button>
       <h2 id="chatModalTitle" style="margin: 0 0 6px;">Новый чат</h2>
       <p class="muted" id="chatModalHint">Укажите название и ID участников.</p>
-      <label>Название</label>
-      <input id="chatTitle" value="Demo chat" required>
+      <label id="chatTitleLabel">Название</label>
+      <input id="chatTitle" value="Demo chat" maxlength="160" required>
       <label id="contactsLabel">Контакты</label>
       <div id="contactList" class="contact-list"></div>
       <div id="chatModalNotice" class="notice"></div>
@@ -2279,9 +2578,10 @@
     </form>
   </div>
 
-  <div id="membersModalBackdrop" class="modal-backdrop">
+  <div id="membersModalBackdrop" class="modal-backdrop" onclick="if(event.target === this) closeMembersModal()">
     <div class="modal">
-      <h2 style="margin: 0 0 6px;">Участники чата</h2>
+      <button type="button" class="modal-close" onclick="closeMembersModal()" aria-label="Закрыть">×</button>
+      <h2 id="membersModalTitle" style="margin: 0 0 6px;">Участники чата</h2>
       <p class="muted" id="membersModalHint">Добавлять и удалять участников может только администратор чата.</p>
       <div id="membersList" class="member-list"></div>
       <div id="membersReadonlyNotice" class="notice muted"></div>
@@ -2290,9 +2590,6 @@
         <div id="memberContactList" class="contact-list"></div>
         <button class="primary">Добавить</button>
       </form>
-      <div class="composer-row" style="grid-template-columns: 1fr; margin-top: 14px;">
-        <button type="button" class="secondary" onclick="closeMembersModal()">Закрыть</button>
-      </div>
       <div id="membersNotice" class="notice"></div>
     </div>
   </div>
@@ -2305,8 +2602,9 @@
     </div>
   </div>
 
-  <div id="editModalBackdrop" class="modal-backdrop">
+  <div id="editModalBackdrop" class="modal-backdrop" onclick="if(event.target === this) closeEditModal()">
     <form class="modal" onsubmit="submitEditMessage(event)">
+      <button type="button" class="modal-close" onclick="closeEditModal()" aria-label="Закрыть">×</button>
       <h2 style="margin: 0 0 6px;">Редактировать сообщение</h2>
       <p class="muted">Измените текст и сохраните сообщение.</p>
       <label>Текст сообщения</label>
@@ -2319,11 +2617,12 @@
     </form>
   </div>
 
-  <div id="confirmModalBackdrop" class="modal-backdrop">
+  <div id="confirmModalBackdrop" class="modal-backdrop" onclick="if(event.target === this) closeConfirmModal(false)">
     <div class="modal">
+      <button type="button" class="modal-close" onclick="closeConfirmModal(false)" aria-label="Закрыть">×</button>
       <h2 id="confirmTitle" style="margin: 0 0 6px;">Подтвердите действие</h2>
       <p id="confirmText" class="muted"></p>
-      <div class="modal-actions">
+      <div id="confirmActions" class="modal-actions">
         <button type="button" class="secondary" onclick="closeConfirmModal(false)">Отмена</button>
         <button id="confirmButton" type="button" class="primary" onclick="closeConfirmModal(true)">Подтвердить</button>
       </div>
@@ -2337,6 +2636,9 @@
     let currentUser = null;
     let currentChat = null;
     let currentChatTitle = "";
+    let currentChatType = "";
+    let currentChatMemberCount = 0;
+    let currentChatRole = "";
     let socket = null;
     let replyToMessage = null;
     let chatModalMode = "chat";
@@ -2348,6 +2650,11 @@
     let loadedMessages = [];
     let canLoadOlder = false;
     let chatsCache = [];
+    let chatSearchTimer = null;
+    let chatSearchRequestId = 0;
+    let chatSearchMatches = new Set();
+    let chatSearchHits = new Map();
+    let chatSearchLoading = false;
     const MESSAGE_PAGE_SIZE = 50;
     const selectedContactIds = new Set();
     let selectedMemberContactId = null;
@@ -2357,6 +2664,8 @@
     const messagesBox = document.getElementById("messages");
     const composer = document.querySelector(".composer");
     const notice = document.getElementById("notice");
+    const profileAvatarFile = document.getElementById("profileAvatarFile");
+    const avatarFileName = document.getElementById("avatarFileName");
     const accountName = document.getElementById("accountName");
     const accountRole = document.getElementById("accountRole");
     const accountEmail = document.getElementById("accountEmail");
@@ -2371,6 +2680,7 @@
     const chatName = document.getElementById("chatName");
     const chatStatus = document.getElementById("chatStatus");
     const membersButton = document.getElementById("membersButton");
+    const deleteChatButton = document.getElementById("deleteChatButton");
     const chatHeaderAvatar = document.getElementById("chatHeaderAvatar");
     const chatSearch = document.getElementById("chatSearch");
     const search = document.getElementById("search");
@@ -2386,7 +2696,9 @@
     const contactsLabel = document.getElementById("contactsLabel");
     const contactList = document.getElementById("contactList");
     const chatTitle = document.getElementById("chatTitle");
+    const chatTitleLabel = document.getElementById("chatTitleLabel");
     const membersModalBackdrop = document.getElementById("membersModalBackdrop");
+    const membersModalTitle = document.getElementById("membersModalTitle");
     const membersModalHint = document.getElementById("membersModalHint");
     const membersList = document.getElementById("membersList");
     const membersNotice = document.getElementById("membersNotice");
@@ -2403,6 +2715,7 @@
     const confirmModalBackdrop = document.getElementById("confirmModalBackdrop");
     const confirmTitle = document.getElementById("confirmTitle");
     const confirmText = document.getElementById("confirmText");
+    const confirmActions = document.getElementById("confirmActions");
     const confirmButton = document.getElementById("confirmButton");
     const toastStack = document.getElementById("toastStack");
 
@@ -2466,7 +2779,11 @@
       return fetch(path, options).then(async response => {
         if (!response.ok) {
           const data = await response.json().catch(() => ({}));
-          throw new Error(data.detail || response.statusText);
+          let detail = data.detail || response.statusText;
+          if (Array.isArray(detail)) {
+            detail = detail.map(item => item.msg || "Ошибка в поле").join(". ");
+          }
+          throw new Error(detail);
         }
         return response.status === 204 ? null : response.json();
       });
@@ -2493,10 +2810,51 @@
       setTimeout(() => toast.remove(), 3000);
     }
 
+    function resetRuntimeState() {
+      if (socket) socket.close();
+      socket = null;
+      currentChat = null;
+      currentChatTitle = "";
+      currentChatType = "";
+      currentChatMemberCount = 0;
+      currentChatRole = "";
+      replyToMessage = null;
+      actionMessageId = null;
+      editingMessageId = null;
+      selectedContactIds.clear();
+      selectedMemberContactId = null;
+      chatSearchMatches.clear();
+      chatSearchHits.clear();
+      chatSearchLoading = false;
+      if (chatSearchTimer) clearTimeout(chatSearchTimer);
+      contactsCache = [];
+      chatsCache = [];
+      loadedMessages = [];
+      canLoadOlder = false;
+      messageCache.clear();
+      closeMenu();
+      closeActionSheet();
+      closeMembersModal();
+      clearReply();
+      chatSearch.value = "";
+      search.value = "";
+      backFromSearch.classList.add("hidden");
+      chatsBox.innerHTML = "";
+      chatName.textContent = "Выберите чат";
+      chatStatus.textContent = "";
+      renderAvatar(chatHeaderAvatar, "", "Messenger");
+      membersButton.classList.add("hidden");
+      deleteChatButton.classList.add("hidden");
+      messagesBox.innerHTML = `<div class="empty">Выберите чат слева или откройте «Избранное» в меню.</div>`;
+      renderRoleAccess();
+    }
+
     async function login(event) {
       event.preventDefault();
       try {
         const data = await api("/api/auth/login", { method: "POST", body: JSON.stringify({ email: loginEmail.value, password: loginPassword.value }) });
+        resetRuntimeState();
+        currentUser = null;
         token = data.access_token;
         localStorage.setItem("token", token);
         go("/app");
@@ -2506,7 +2864,7 @@
     async function register(event) {
       event.preventDefault();
       try {
-        await api("/api/auth/register", { method: "POST", body: JSON.stringify({ email: registerEmail.value, username: registerUsername.value, password: registerPassword.value, role: registerRole.value }) });
+        await api("/api/auth/register", { method: "POST", body: JSON.stringify({ email: registerEmail.value, username: registerUsername.value, password: registerPassword.value }) });
         show("Аккаунт создан. Теперь можно войти.", true, registerNotice);
         setTimeout(() => go("/login"), 700);
       } catch (error) { show(error.message, false, registerNotice); }
@@ -2539,19 +2897,22 @@
     }
 
     function renderRoleAccess() {
-      const canCreateChats = currentUser && currentUser.role !== "reader";
+      const canCreateChats = !!currentUser;
       document.querySelectorAll("[data-writer-only]").forEach(item => item.classList.toggle("hidden", !canCreateChats));
       const canSend = canCurrentUserSendHere();
-      const readerReadonly = !!currentChat && currentUser?.role === "reader" && !canSend;
-      composer.classList.toggle("readonly", readerReadonly);
+      const readonlyChat = !!currentChat && !canSend;
+      composer.classList.toggle("readonly", readonlyChat);
       messageBody.disabled = !canSend;
-      sendMessageButton.disabled = !canSend && !readerReadonly;
+      sendMessageButton.disabled = false;
       if (!currentChat) {
         messageBody.placeholder = "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0447\u0430\u0442";
-      } else if (!canSend && currentUser?.role === "reader") {
-        messageBody.placeholder = "\u0427\u0438\u0442\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u043f\u0438\u0441\u0430\u0442\u044c \u0442\u043e\u043b\u044c\u043a\u043e \u0432 \u00ab\u0418\u0437\u0431\u0440\u0430\u043d\u043d\u043e\u043c\u00bb";
+        sendMessageButton.textContent = "Отправить";
+      } else if (!canSend) {
+        messageBody.placeholder = "В этом чате у вас доступ только на чтение";
+        sendMessageButton.textContent = "Избранное";
       } else {
         messageBody.placeholder = "\u0421\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435";
+        sendMessageButton.textContent = "Отправить";
       }
     }
 
@@ -2598,7 +2959,7 @@
           ${contactAvatarHtml(contact)}
           <span>
             <span class="contact-name">${escapeHtml(contactName(contact))}</span>
-            <span class="contact-meta">${escapeHtml(contactMeta(contact))}</span>
+            <span class="contact-meta">${escapeHtml(options.compact ? contact.email : contactMeta(contact))}</span>
           </span>
           <span class="contact-check">✓</span>
         </button>`;
@@ -2614,7 +2975,7 @@
       } else {
         selectedContactIds.add(userId);
       }
-      renderContactPicker(contactList, selectedContactIds, { onClick: "toggleChatContact" });
+      renderContactPicker(contactList, selectedContactIds, { onClick: "toggleChatContact", compact: true });
       if (chatModalMode === "chat") {
         const contact = contactsCache.find(item => item.id === userId);
         if (contact) chatTitle.value = contactName(contact);
@@ -2638,11 +2999,47 @@
       currentUser = await api("/api/users/me");
       profileAvatarData = currentUser.avatar_url || "";
       profileAvatarFile.value = "";
+      avatarFileName.textContent = "Файл не выбран";
       profileName.value = currentUser.display_name || currentUser.username || "";
       profileAge.value = currentUser.age || "";
       profileCity.value = currentUser.city || "";
       profileStatus.value = currentUser.status_text || "";
+      validateProfileForm(false);
       refreshProfilePreview();
+    }
+
+    function setFieldHint(input, message, isError = false) {
+      const hint = document.querySelector(`.field-hint[data-for="${input.id}"]`);
+      if (!hint) return;
+      hint.textContent = message;
+      hint.classList.toggle("error", isError);
+    }
+
+    function validateProfileField(input) {
+      const textLimits = {
+        profileName: ["Максимум 40 символов.", "Никнейм нельзя писать длиннее 40 символов.", 40],
+        profileCity: ["Максимум 80 символов.", "Город нельзя писать длиннее 80 символов.", 80],
+        profileStatus: ["Максимум 120 символов.", "Статус нельзя писать длиннее 120 символов.", 120],
+      };
+      if (input.id === "profileAge") {
+        const value = input.value === "" ? null : Number(input.value);
+        const invalid = value !== null && (!Number.isFinite(value) || value < 0 || value > 200);
+        setFieldHint(input, invalid ? "Возраст должен быть числом от 0 до 200 лет." : "Возраст должен быть от 0 до 200 лет.", invalid);
+        return !invalid;
+      }
+      const config = textLimits[input.id];
+      if (!config) return true;
+      const length = String(input.value || "").length;
+      const tooLong = length > config[2];
+      const atLimit = length >= config[2];
+      setFieldHint(input, tooLong ? config[1] : (atLimit ? `Достигнут лимит: нельзя больше ${config[2]} символов.` : config[0]), tooLong);
+      return !tooLong;
+    }
+
+    function validateProfileForm(showNotice = true) {
+      const valid = [profileName, profileAge, profileCity, profileStatus].every(validateProfileField);
+      if (!valid && showNotice) show("Проверьте поля профиля: есть значения длиннее разрешенного лимита или возраст больше 200 лет.", false, profileNotice);
+      return valid;
     }
 
     function refreshProfilePreview() {
@@ -2656,6 +3053,7 @@
     function loadAvatarFile(event) {
       const file = event.target.files && event.target.files[0];
       if (!file) return;
+      avatarFileName.textContent = file.name;
       if (!file.type.startsWith("image/")) {
         show("Выберите файл изображения", false, profileNotice);
         return;
@@ -2663,6 +3061,7 @@
       if (file.size > 900_000) {
         show("Лучше выбрать изображение до 900 КБ, чтобы профиль сохранялся быстро", false, profileNotice);
         event.target.value = "";
+        avatarFileName.textContent = "Файл не выбран";
         return;
       }
       const reader = new FileReader();
@@ -2676,11 +3075,23 @@
     function clearAvatar() {
       profileAvatarData = "";
       profileAvatarFile.value = "";
+      avatarFileName.textContent = "Файл не выбран";
       refreshProfilePreview();
     }
 
     async function saveProfile(event) {
       event.preventDefault();
+      if (!validateProfileForm()) return;
+      const limits = [
+        [profileName.value, 40, "Никнейм"],
+        [profileCity.value, 80, "Город"],
+        [profileStatus.value, 120, "Статус"],
+      ];
+      const brokenLimit = limits.find(([value, max]) => String(value || "").length > max);
+      if (brokenLimit) {
+        show(`${brokenLimit[2]} не должен быть длиннее ${brokenLimit[1]} символов`, false, profileNotice);
+        return;
+      }
       try {
         currentUser = await api("/api/users/me/profile", {
           method: "PATCH",
@@ -2688,7 +3099,7 @@
             display_name: profileName.value || null,
             avatar_url: profileAvatarData || null,
             city: profileCity.value || null,
-            age: profileAge.value ? Number(profileAge.value) : null,
+            age: profileAge.value === "" ? null : Number(profileAge.value),
             status_text: profileStatus.value || null,
             is_online: true,
           })
@@ -2710,10 +3121,10 @@
 
     async function logout() {
       await setPresence(false);
+      resetRuntimeState();
       token = "";
       currentUser = null;
       localStorage.removeItem("token");
-      if (socket) socket.close();
       go("/login");
     }
 
@@ -2734,31 +3145,105 @@
 
     async function loadChats() {
       chatsCache = await api("/api/chats");
+      await hydrateDirectChats();
       renderChats();
+    }
+
+    async function hydrateDirectChats() {
+      await Promise.all(chatsCache.map(async chat => {
+        if (chat.type !== "direct" || isSavedTitle(chat.title)) return;
+        try {
+          const members = await api(`/api/chats/${chat.id}/members`);
+          const peer = members.find(member => member.user_id !== currentUser?.id);
+          if (!peer) return;
+          chat.peer = peer;
+          chat.display_title = peer.display_name || peer.username || chat.title;
+          chat.display_avatar_url = peer.avatar_url || "";
+        } catch (_) {}
+      }));
     }
 
     function renderChats() {
       const q = (chatSearch?.value || "").trim().toLowerCase();
-      const chats = q ? chatsCache.filter(chat => chat.title.toLowerCase().includes(q) || (chat.last_message_body || "").toLowerCase().includes(q)) : chatsCache;
-      chatsBox.innerHTML = chats.length ? chats.map(renderChatCard).join("") : `<div class="empty compact">Ничего не найдено</div>`;
+      const chats = q ? chatsCache.filter(chat => {
+        const titleMatch = (chat.display_title || chat.title).toLowerCase().includes(q);
+        const previewMatch = (chat.last_message_body || "").toLowerCase().includes(q);
+        return titleMatch || previewMatch || chatSearchMatches.has(chat.id);
+      }) : chatsCache;
+      const loading = q && chatSearchLoading ? `<div class="empty compact">Ищем в сообщениях...</div>` : "";
+      chatsBox.innerHTML = chats.length ? loading + chats.map(renderChatCard).join("") : `<div class="empty compact">${chatSearchLoading ? "Ищем в сообщениях..." : "Ничего не найдено"}</div>`;
+    }
+
+    function scheduleChatSearch() {
+      const q = (chatSearch?.value || "").trim();
+      chatSearchMatches.clear();
+      chatSearchHits.clear();
+      if (chatSearchTimer) clearTimeout(chatSearchTimer);
+      if (!q) {
+        chatSearchLoading = false;
+        renderChats();
+        return;
+      }
+      if (q.length > 120) {
+        chatSearchLoading = false;
+        show("Поисковый запрос не должен быть длиннее 120 символов", false);
+        renderChats();
+        return;
+      }
+      chatSearchLoading = true;
+      renderChats();
+      const requestId = ++chatSearchRequestId;
+      chatSearchTimer = setTimeout(() => searchChatsByMessages(q, requestId), 280);
+    }
+
+    async function searchChatsByMessages(query, requestId) {
+      try {
+        const messages = await api(`/api/messages/search?q=${encodeURIComponent(query)}`);
+        if (requestId !== chatSearchRequestId) return;
+        chatSearchMatches = new Set();
+        chatSearchHits = new Map();
+        messages.forEach(message => {
+          if (chatSearchHits.has(message.chat_id)) return;
+          chatSearchMatches.add(message.chat_id);
+          chatSearchHits.set(message.chat_id, message);
+        });
+      } catch (error) {
+        if (requestId === chatSearchRequestId) show(error.message, false);
+      } finally {
+        if (requestId === chatSearchRequestId) {
+          chatSearchLoading = false;
+          renderChats();
+        }
+      }
     }
 
     function renderChatCard(chat) {
-      const preview = chat.last_message_body
+      const title = chat.display_title || chat.title;
+      const searchHit = chatSearchHits.get(chat.id);
+      const avatar = chat.display_avatar_url
+        ? `<span class="chat-avatar"><img src="${escapeAttr(chat.display_avatar_url)}" alt="${escapeAttr(title)}"></span>`
+        : `<span class="chat-avatar">${escapeHtml(initials(title))}</span>`;
+      const preview = searchHit
+        ? `Найдено: ${searchHit.body}`
+        : chat.last_message_body
         ? `${chat.last_message_sender_id === currentUser?.id ? "Вы" : chat.last_message_sender_name || "Сообщение"}: ${chat.last_message_body}`
         : "Сообщений пока нет";
       const status = chat.last_message_status && chat.last_message_sender_id === currentUser?.id ? messageStatusChecks(chat.last_message_status) : "";
-      const time = chat.last_message_created_at ? new Date(chat.last_message_created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
-      return `<button class="chat-card ${chat.id === currentChat ? "active" : ""}" onclick="openChat(${chat.id}, '${escapeAttr(chat.title)}')">
-        <span class="chat-avatar">${escapeHtml(initials(chat.title))}</span>
+      const timeSource = searchHit?.created_at || chat.last_message_created_at;
+      const time = timeSource ? new Date(timeSource).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+      const deleteButton = isSavedTitle(chat.title) ? "" : `<button type="button" class="chat-delete-button" title="Удалить чат" onclick="deleteChatFromList(event, ${chat.id})">×</button>`;
+      const anchorArg = searchHit ? `, ${searchHit.id}` : "";
+      return `<div class="chat-card ${chat.id === currentChat ? "active" : ""}" onclick="openChat(${chat.id}, '${escapeAttr(chat.title)}'${anchorArg})">
+        ${avatar}
         <span class="chat-card-main">
-          <span class="chat-card-head"><strong>${escapeHtml(chat.title)}</strong><em>${escapeHtml(time)}</em></span>
+          <span class="chat-card-head"><strong>${escapeHtml(title)}</strong><em>${escapeHtml(time)}</em></span>
           <span class="chat-preview">
             <span class="chat-preview-text">${escapeHtml(preview)}</span>
             ${status}
           </span>
         </span>
-      </button>`;
+        ${deleteButton}
+      </div>`;
     }
 
     function participantWord(count) {
@@ -2769,6 +3254,64 @@
       return "участников";
     }
 
+    function memberRoleLabel(role) {
+      if (role === "owner") return "Админ";
+      if (role === "readonly") return "Читатель";
+      return "Писатель";
+    }
+
+    function isSavedTitle(title) {
+      return (title || "").toLowerCase() === "\u0438\u0437\u0431\u0440\u0430\u043d\u043d\u043e\u0435";
+    }
+
+    function openChatInfo(event) {
+      event?.stopPropagation();
+      if (currentChatType === "direct") {
+        openDirectProfileFromHeader(event);
+        return;
+      }
+      openMembersModal();
+    }
+
+    async function openDirectProfileFromHeader(event) {
+      event?.stopPropagation();
+      if (!currentChat || currentChatType !== "direct" || isSavedChatOpen()) return;
+      try {
+        const members = await api(`/api/chats/${currentChat}/members`);
+        const peer = members.find(member => member.user_id !== currentUser?.id);
+        if (!peer) return;
+        membersModalTitle.textContent = "Профиль";
+        membersModalHint.textContent = "Профиль участника личного чата.";
+        membersReadonlyNotice.textContent = "";
+        memberAddForm.classList.add("hidden");
+        membersNotice.textContent = "";
+        const peerName = peer.display_name || peer.username;
+        const peerAvatar = peer.avatar_url
+          ? `<span class="contact-avatar"><img src="${escapeAttr(peer.avatar_url)}" alt="${escapeAttr(peerName)}"></span>`
+          : `<span class="contact-avatar">${escapeHtml(initials(peerName))}</span>`;
+        const profileRows = [
+          ["Email", peer.email],
+          ["Город", peer.city],
+          ["Возраст", peer.age ? `${peer.age} лет` : ""],
+          ["Статус", peer.status_text],
+          ["Сейчас", peer.is_online ? "В сети" : "Не в сети"],
+        ].filter(([, value]) => Boolean(value)).map(([label, value]) => `
+          <div class="profile-info-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>
+        `).join("");
+        membersList.innerHTML = `
+          <div class="member-row profile-member-row" data-user-id="${peer.user_id}">
+            ${peerAvatar}
+            <div>
+              <strong>${escapeHtml(peerName)}</strong>
+              <div class="profile-info-grid">${profileRows}</div>
+            </div>
+          </div>`;
+        membersModalBackdrop.classList.add("open");
+      } catch (error) {
+        show(error.message, false);
+      }
+    }
+
     async function refreshChatStatus() {
       if (!currentChat) {
         chatStatus.textContent = "";
@@ -2776,7 +3319,25 @@
       }
       try {
         const members = await api(`/api/chats/${currentChat}/members`);
-        chatStatus.textContent = `${members.length} ${participantWord(members.length)}`;
+        currentChatMemberCount = members.length;
+        const ownMember = members.find(member => member.user_id === currentUser?.id);
+        currentChatRole = ownMember?.role || "";
+        const savedChat = isSavedChatOpen();
+        const directChat = currentChatType === "direct";
+        if (savedChat || directChat) {
+          chatStatus.textContent = "";
+        } else {
+          chatStatus.textContent = `${members.length} ${participantWord(members.length)}`;
+        }
+        membersButton.textContent = directChat ? "Профиль" : "Участники";
+        membersButton.classList.toggle("hidden", savedChat || !currentChat || !["group", "direct"].includes(currentChatType));
+        if (currentChatType === "group") {
+          deleteChatButton.textContent = currentChatRole === "owner" ? "Удалить" : "Выйти";
+        } else {
+          deleteChatButton.textContent = "Удалить";
+        }
+        deleteChatButton.classList.toggle("hidden", savedChat || !currentChat);
+        renderRoleAccess();
       } catch (_) {
         chatStatus.textContent = "";
       }
@@ -2789,10 +3350,6 @@
     }
 
     async function openChatModal(mode) {
-      if (currentUser?.role === "reader") {
-        show("\u0427\u0438\u0442\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u0447\u0438\u0442\u0430\u0442\u044c \u0447\u0430\u0442\u044b \u0438 \u0434\u043e\u0431\u0430\u0432\u043b\u044f\u0442\u044c \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f \u0432 \u0438\u0437\u0431\u0440\u0430\u043d\u043d\u043e\u0435", false);
-        return;
-      }
       chatModalMode = mode;
       selectedContactIds.clear();
       chatModalNotice.textContent = "";
@@ -2801,10 +3358,14 @@
       contactsLabel.textContent = mode === "group" ? "Участники группы" : "Контакт";
       chatTitle.value = mode === "group" ? "Новая группа" : "";
       chatTitle.placeholder = mode === "group" ? "Название группы" : "Название подставится после выбора контакта";
+      chatTitle.required = mode === "group";
+      chatTitle.disabled = mode !== "group";
+      chatTitle.classList.toggle("hidden", mode !== "group");
+      chatTitleLabel.classList.toggle("hidden", mode !== "group");
       chatModalBackdrop.classList.add("open");
       try {
         await loadContacts();
-        renderContactPicker(contactList, selectedContactIds, { onClick: "toggleChatContact" });
+        renderContactPicker(contactList, selectedContactIds, { onClick: "toggleChatContact", compact: true });
       } catch (error) {
         show(error.message, false, chatModalNotice);
       }
@@ -2819,7 +3380,8 @@
         show("Сначала выберите групповой чат", false);
         return;
       }
-      if (isSavedChatOpen()) return;
+      if (isSavedChatOpen() || currentChatType !== "group") return;
+      membersModalTitle.textContent = "Участники чата";
       membersModalHint.textContent = "\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043c \u0443\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u043e\u0432...";
       membersModalBackdrop.classList.add("open");
       selectedMemberContactId = null;
@@ -2838,28 +3400,40 @@
       try {
         const members = await api(`/api/chats/${currentChat}/members`);
         const savedChat = isSavedChatOpen();
-        const canManageMembers = !savedChat && (currentUser?.role === "admin" || members.some(member => member.user_id === currentUser?.id && member.role === "owner"));
+        const groupChat = currentChatType === "group";
+        const canManageMembers = groupChat && members.some(member => member.user_id === currentUser?.id && member.role === "owner");
         if (savedChat) {
-          membersModalHint.textContent = "\u00ab\u0418\u0437\u0431\u0440\u0430\u043d\u043d\u043e\u0435\u00bb - \u044d\u0442\u043e \u043b\u0438\u0447\u043d\u044b\u0439 \u0447\u0430\u0442 \u0434\u043b\u044f \u0432\u0430\u0448\u0438\u0445 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0439 \u0438 \u0437\u0430\u043c\u0435\u0442\u043e\u043a. \u0423\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u043e\u0432 \u0441\u044e\u0434\u0430 \u0434\u043e\u0431\u0430\u0432\u043b\u044f\u0442\u044c \u043d\u0435\u043b\u044c\u0437\u044f.";
+          membersModalHint.textContent = "";
         } else {
           membersModalHint.textContent = canManageMembers
-            ? `\u0412\u044b \u043c\u043e\u0436\u0435\u0442\u0435 \u0434\u043e\u0431\u0430\u0432\u043b\u044f\u0442\u044c \u0438 \u0443\u0434\u0430\u043b\u044f\u0442\u044c \u0443\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u043e\u0432 \u0447\u0430\u0442\u0430 "${currentChatTitle || "\u0442\u0435\u043a\u0443\u0449\u0438\u0439 \u0447\u0430\u0442"}".`
-            : `\u0412\u044b \u043c\u043e\u0436\u0435\u0442\u0435 \u0441\u043c\u043e\u0442\u0440\u0435\u0442\u044c \u0441\u043f\u0438\u0441\u043e\u043a \u0443\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u043e\u0432. \u0414\u043e\u0431\u0430\u0432\u043b\u044f\u0442\u044c \u0438 \u0443\u0434\u0430\u043b\u044f\u0442\u044c \u0443\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u043e\u0432 \u043c\u043e\u0436\u0435\u0442 \u0442\u043e\u043b\u044c\u043a\u043e \u0430\u0434\u043c\u0438\u043d \u0447\u0430\u0442\u0430.`;
+            ? `Вы можете управлять участниками группы "${currentChatTitle || "текущая группа"}".`
+            : `Список участников группы. Управление доступно только админу группы.`;
         }
         membersReadonlyNotice.textContent = savedChat
-          ? "\u0421\u043f\u0438\u0441\u043e\u043a \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043e\u0432 \u0434\u043b\u044f \u0434\u043e\u0431\u0430\u0432\u043b\u0435\u043d\u0438\u044f \u0441\u043a\u0440\u044b\u0442, \u043f\u043e\u0442\u043e\u043c\u0443 \u0447\u0442\u043e \u00ab\u0418\u0437\u0431\u0440\u0430\u043d\u043d\u043e\u0435\u00bb \u043d\u0435 \u044f\u0432\u043b\u044f\u0435\u0442\u0441\u044f \u0433\u0440\u0443\u043f\u043f\u043e\u0439."
+          ? ""
           : (canManageMembers ? "" : "\u0414\u043e\u0441\u0442\u0443\u043f\u043d\u043e \u0442\u043e\u043b\u044c\u043a\u043e \u043f\u0440\u043e\u0441\u043c\u0430\u0442\u0440\u0438\u0432\u0430\u043d\u0438\u0435 \u0441\u043e\u0441\u0442\u0430\u0432\u0430 \u0447\u0430\u0442\u0430.");
         memberAddForm.classList.toggle("hidden", !canManageMembers);
+        if (!canManageMembers) {
+          memberContactList.innerHTML = "";
+          selectedMemberContactId = null;
+        }
         membersList.innerHTML = members.map(member => {
-          const adminBadge = !savedChat && (member.role === "owner" || member.app_role === "admin") ? ` <span style="display:inline;color:rgba(102,112,133,.72);font-size:11px;text-transform:uppercase;">ADMIN</span>` : "";
+          const adminBadge = !savedChat && member.role === "owner" ? ` <span class="member-role-badge">ADMIN</span>` : "";
           const removeButton = canManageMembers && member.user_id !== currentUser?.id ? `<button class="tiny danger" onclick="removeChatMember(${member.user_id})">\u0423\u0434\u0430\u043b\u0438\u0442\u044c</button>` : "";
+          const roleControl = canManageMembers && member.user_id !== currentUser?.id ? `
+            <select class="tiny" onchange="updateChatMemberRole(${member.user_id}, this.value)">
+              <option value="member" ${member.role === "member" ? "selected" : ""}>Писатель</option>
+              <option value="readonly" ${member.role === "readonly" ? "selected" : ""}>Читатель</option>
+              <option value="owner" ${member.role === "owner" ? "selected" : ""}>Админ</option>
+            </select>` : "";
+          const roleText = canManageMembers || member.role === "owner" ? "" : ` · ${memberRoleLabel(member.role)}`;
           return `
           <div class="member-row" data-user-id="${member.user_id}">
             <div>
               <strong>${escapeHtml(member.username)}${adminBadge}</strong>
-              <span>${escapeHtml(member.email)}</span>
+              <span>${escapeHtml(member.email)}${roleText}</span>
             </div>
-            ${removeButton}
+            ${canManageMembers ? `<div style="display:flex;gap:8px;align-items:center;">${roleControl}${removeButton}</div>` : ""}
           </div>`;
         }).join("");
         if (!members.length) membersList.innerHTML = `<div class="empty" style="min-height:90px;">\u0423\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u043e\u0432 \u043f\u043e\u043a\u0430 \u043d\u0435\u0442.</div>`;
@@ -2897,6 +3471,21 @@
       }
     }
 
+    async function updateChatMemberRole(userId, role) {
+      try {
+        await api(`/api/chats/${currentChat}/members/${userId}`, {
+          method: "PATCH",
+          body: JSON.stringify({ role }),
+        });
+        show("Роль участника обновлена", true, membersNotice);
+        await loadMembers();
+        await refreshChatStatus();
+      } catch (error) {
+        show(error.message, false, membersNotice);
+        await loadMembers();
+      }
+    }
+
     async function removeChatMember(userId) {
       const ok = await appConfirm("Удалить участника?", "Пользователь потеряет доступ к этому чату.", "Удалить");
       if (!ok) return;
@@ -2910,12 +3499,79 @@
       }
     }
 
-    async function createChat(event) {
-      event.preventDefault();
-      if (currentUser?.role === "reader") {
-        show("\u0427\u0438\u0442\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u0441\u043e\u0437\u0434\u0430\u0432\u0430\u0442\u044c \u0447\u0430\u0442\u044b", false, chatModalNotice);
+    async function deleteChatById(chatId) {
+      const chat = chatsCache.find(item => item.id === chatId);
+      if (isSavedTitle(chat?.title)) {
+        show("Избранное удалить нельзя", false);
         return;
       }
+      const title = chat?.title || currentChatTitle || "чат";
+      const type = chat?.type || currentChatType;
+      let role = chatId === currentChat ? currentChatRole : "";
+      if (type === "group" && !role) {
+        try {
+          const members = await api(`/api/chats/${chatId}/members`);
+          role = members.find(member => member.user_id === currentUser?.id)?.role || "";
+        } catch (_) {}
+      }
+      let scope = "me";
+      if (type === "direct") {
+        scope = await appChoice("Удалить личный чат?", `Выберите, как удалить чат «${title}».`, [
+          { value: "me", label: "Только у меня", className: "secondary" },
+          { value: "all", label: "У всех", className: "primary danger" },
+          { value: "", label: "Отмена", className: "secondary" },
+        ]);
+        if (!scope) return;
+      } else if (type === "group") {
+        if (role === "owner") {
+          const choice = await appChoice("Группа", `Что сделать с группой «${title}»?`, [
+            { value: "me", label: "Выйти", className: "secondary" },
+            { value: "all", label: "Удалить у всех", className: "primary danger" },
+            { value: "", label: "Отмена", className: "secondary" },
+          ]);
+          if (!choice) return;
+          scope = choice;
+        } else {
+          const ok = await appConfirm("Выйти из группы?", `Вы перестанете видеть группу «${title}».`, "Выйти");
+          if (!ok) return;
+          scope = "me";
+        }
+      }
+      try {
+        await api(`/api/chats/${chatId}?scope=${encodeURIComponent(scope)}`, { method: "DELETE" });
+        if (currentChat === chatId) {
+          currentChat = null;
+          currentChatTitle = "";
+          currentChatType = "";
+          currentChatRole = "";
+          chatName.textContent = "Выберите чат";
+          chatStatus.textContent = "";
+      chatHeaderAvatar.textContent = "M";
+          membersButton.classList.add("hidden");
+          deleteChatButton.classList.add("hidden");
+          clearReply();
+          messagesBox.innerHTML = `<div class="empty">Выберите чат слева или откройте «Избранное» в меню.</div>`;
+        }
+        await loadChats();
+        show(scope === "me" ? "Чат скрыт у вас" : "Чат удалён у всех");
+      } catch (error) {
+        show(error.message, false);
+      }
+    }
+
+    function deleteChatFromList(event, chatId) {
+      event.stopPropagation();
+      deleteChatById(chatId);
+    }
+
+    function deleteCurrentChat(event) {
+      event?.stopPropagation();
+      if (!currentChat) return;
+      deleteChatById(currentChat);
+    }
+
+    async function createChat(event) {
+      event.preventDefault();
       try {
         const ids = Array.from(selectedContactIds);
         if (chatModalMode === "chat" && ids.length !== 1) {
@@ -2927,7 +3583,9 @@
           return;
         }
         const selectedContact = contactsCache.find(contact => contact.id === ids[0]);
-        const title = chatTitle.value.trim() || (selectedContact ? contactName(selectedContact) : "Новый чат");
+        const title = chatModalMode === "chat"
+          ? (selectedContact ? contactName(selectedContact) : "Новый чат")
+          : (chatTitle.value.trim() || "Новая группа");
         const chat = await api("/api/chats", {
           method: "POST",
           body: JSON.stringify({
@@ -2945,19 +3603,49 @@
     async function openChat(id, title, anchorId = null) {
       currentChat = id;
       currentChatTitle = title;
+      let cachedChat = chatsCache.find(chat => chat.id === id);
+      try {
+        cachedChat = await api(`/api/chats/${id}`);
+        currentChatTitle = cachedChat.title || title;
+      } catch (_) {}
+      currentChatType = cachedChat?.type || "";
+      currentChatMemberCount = cachedChat?.member_count || 0;
+      currentChatRole = "";
       clearReply();
       exitSearch(false);
-      chatName.textContent = title;
-      chatHeaderAvatar.textContent = initials(title);
-      membersButton.classList.toggle("hidden", isSavedChatOpen());
-      if (isSavedChatOpen()) closeMembersModal();
+      chatName.textContent = cachedChat?.display_title || currentChatTitle;
+      if (cachedChat?.display_avatar_url) {
+        renderAvatar(chatHeaderAvatar, cachedChat.display_avatar_url, cachedChat.display_title || currentChatTitle);
+      } else {
+        chatHeaderAvatar.textContent = initials(cachedChat?.display_title || currentChatTitle);
+      }
+      membersButton.textContent = currentChatType === "direct" ? "Профиль" : "Участники";
+      membersButton.classList.toggle("hidden", isSavedChatOpen() || !["group", "direct"].includes(currentChatType));
+      deleteChatButton.textContent = currentChatType === "group" && currentChatRole !== "owner" ? "Выйти" : "Удалить";
+      deleteChatButton.classList.toggle("hidden", isSavedChatOpen() || !currentChat);
+      chatStatus.textContent = (isSavedChatOpen() || currentChatType !== "group")
+        ? ""
+        : (currentChatMemberCount ? `${currentChatMemberCount} ${participantWord(currentChatMemberCount)}` : "");
+      if (isSavedChatOpen() || currentChatType !== "group") closeMembersModal();
       renderRoleAccess();
       await refreshChatStatus();
+      if (currentChatType === "direct" && !isSavedChatOpen()) await updateDirectChatHeader();
       await loadChats();
       await loadMessages(anchorId);
       await loadChats();
       connectSocket();
       if (anchorId) highlightMessage(anchorId);
+    }
+
+    async function updateDirectChatHeader() {
+      try {
+        const members = await api(`/api/chats/${currentChat}/members`);
+        const peer = members.find(member => member.user_id !== currentUser?.id);
+        if (!peer) return;
+        const peerName = peer.display_name || peer.username || currentChatTitle;
+        chatName.textContent = peerName;
+        renderAvatar(chatHeaderAvatar, peer.avatar_url || "", peerName);
+      } catch (_) {}
     }
 
     async function loadMessages(anchorId = null) {
@@ -2998,17 +3686,29 @@
       return `<span class="message-status" title="Отправлено"><span class="check">✓</span></span>`;
     }
 
+    function messageAvatarHtml(name, avatarUrl) {
+      if (avatarUrl) return `<span class="message-avatar"><img src="${escapeAttr(avatarUrl)}" alt="${escapeAttr(name)}"></span>`;
+      return `<span class="message-avatar">${escapeHtml(initials(name))}</span>`;
+    }
+
     function renderMessage(message) {
-      const mine = currentUser && message.sender_id === currentUser.id;
+      const visualSenderId = message.is_forwarded && message.source_sender_id ? message.source_sender_id : message.sender_id;
+      const mine = currentUser && visualSenderId === currentUser.id;
       const reply = !message.is_forwarded && message.reply_to_message_id ? messageCache.get(message.reply_to_message_id) : null;
-      const senderName = message.sender_name || message.sender_username || `user #${message.sender_id}`;
+      const senderName = message.is_forwarded && message.source_sender_name
+        ? message.source_sender_name
+        : message.sender_name || message.sender_username || `user #${message.sender_id}`;
       const edited = message.edited_at ? `<span>изменено</span>` : "";
       const status = mine ? messageStatusChecks(message.status) : "";
-      const meta = `<div class="meta"><span class="sender-name">${escapeHtml(senderName)}</span><span class="meta-right"><span>${new Date(message.created_at).toLocaleString()}</span>${edited}${status}</span></div>`;
-      const source = message.is_forwarded ? `<button type="button" class="source-preview clickable" title="${escapeAttr(message.source_chat_title || "")}" onclick="openSourceMessage(${message.source_chat_id || 0}, ${message.source_message_id || 0}, '${escapeAttr(message.source_chat_title || "чат")}')">↪ <span>Из «${escapeHtml(message.source_chat_title || "чат")}»${message.source_sender_name ? ` · ${escapeHtml(message.source_sender_name)}` : ""}</span></button>` : "";
+      const senderLabel = mine ? "" : `<span class="sender-name">${escapeHtml(senderName)}</span>`;
+      const meta = `<span class="meta-right"><span>${new Date(message.created_at).toLocaleString()}</span>${edited}${status}</span>`;
+      const sourceSenderLabel = message.source_sender_name && message.source_sender_id !== currentUser?.id ? ` · ${escapeHtml(message.source_sender_name)}` : "";
+      const source = message.is_forwarded ? `<button type="button" class="source-preview clickable" title="${escapeAttr(message.source_chat_title || "")}" onclick="openSourceMessage(${message.source_chat_id || 0}, ${message.source_message_id || 0}, '${escapeAttr(message.source_chat_title || "чат")}')">↪ <span>Из «${escapeHtml(message.source_chat_title || "чат")}»${sourceSenderLabel}</span></button>` : "";
       const menu = message.is_deleted ? "" : `<button class="message-menu-button" title="Действия" onclick="openActionSheet(event, ${message.id})">⋯</button>`;
-      const avatar = mine ? "" : `<span class="message-avatar">${escapeHtml(initials(senderName))}</span>`;
-      return `<article class="message ${mine ? "mine" : ""} ${message.is_deleted ? "deleted" : ""}" id="message-${message.id}">${avatar}${meta}${source}${reply ? `<div class="reply-preview">Ответ на: ${escapeHtml(reply.body)}</div>` : ""}<div>${escapeHtml(message.body)}</div>${menu}</article>`;
+      const avatarUrl = message.is_forwarded && message.source_sender_avatar_url ? message.source_sender_avatar_url : message.sender_avatar_url;
+      const avatar = mine ? "" : messageAvatarHtml(senderName, avatarUrl);
+      const content = `${source}${senderLabel}${reply ? `<div class="reply-preview">Ответ на: ${escapeHtml(reply.body)}</div>` : ""}<div class="message-content-row"><div class="message-text">${escapeHtml(message.body)}</div>${meta}</div>`;
+      return `<article class="message ${mine ? "mine" : ""} ${message.is_deleted ? "deleted" : ""}" id="message-${message.id}">${avatar}${content}${menu}</article>`;
     }
 
     async function openSourceMessage(chatId, messageId, title) {
@@ -3020,7 +3720,7 @@
         await api(`/api/chats/${chatId}`);
         await openChat(chatId, title, messageId);
       } catch (error) {
-        showToast(error.message === "No access to this chat" ? "Вы не являетесь участником исходного чата" : "Исходное сообщение недоступно", false);
+        showToast(error.message === "Нет доступа к этому чату" ? "Вы не являетесь участником исходного чата" : "Исходное сообщение недоступно", false);
       }
     }
 
@@ -3032,21 +3732,18 @@
           return;
         }
         target.scrollIntoView({ block: "center", behavior: "smooth" });
-        target.classList.add("menu-open");
-        setTimeout(() => target.classList.remove("menu-open"), 1600);
+        target.classList.add("source-highlight");
+        setTimeout(() => target.classList.remove("source-highlight"), 1000);
       }, 80);
     }
 
     async function sendMessage() {
-      if (currentUser?.role === "reader" && currentChat && !canCurrentUserSendHere()) {
+      if (!currentChat) return;
+      if (!canCurrentUserSendHere()) {
         await openSavedChat();
         return;
       }
-      if (!currentChat || !messageBody.value.trim()) return;
-      if (!canCurrentUserSendHere()) {
-        show("\u0427\u0438\u0442\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u043f\u0438\u0441\u0430\u0442\u044c \u0442\u043e\u043b\u044c\u043a\u043e \u0432 \u00ab\u0418\u0437\u0431\u0440\u0430\u043d\u043d\u043e\u043c\u00bb", false);
-        return;
-      }
+      if (!messageBody.value.trim()) return;
       try {
         await api(`/api/chats/${currentChat}/messages`, { method: "POST", body: JSON.stringify({ body: messageBody.value, reply_to_message_id: replyToMessage ? replyToMessage.id : null }) });
         messageBody.value = "";
@@ -3057,6 +3754,10 @@
 
     async function searchMessages() {
       if (!currentChat || !search.value.trim()) return;
+      if (search.value.trim().length > 120) {
+        show("Поисковый запрос не должен быть длиннее 120 символов", false);
+        return;
+      }
       const messages = await api(`/api/messages/search?chat_id=${currentChat}&q=${encodeURIComponent(search.value)}`);
       chatStatus.textContent = `Режим поиска: найдено ${messages.length}`;
       backFromSearch.classList.remove("hidden");
@@ -3082,14 +3783,12 @@
     function clearReply() { replyToMessage = null; replyBox.classList.remove("active"); replyText.textContent = ""; }
 
     function isSavedChatOpen() {
-      const title = (currentChatTitle || "").toLowerCase();
-      return title === "\u0438\u0437\u0431\u0440\u0430\u043d\u043d\u043e\u0435";
+      return isSavedTitle(currentChatTitle);
     }
 
     function canCurrentUserSendHere() {
       if (!currentUser || !currentChat) return false;
-      if (currentUser.role === "reader") return isSavedChatOpen();
-      return true;
+      return currentChatRole !== "readonly";
     }
 
     function openActionSheet(event, messageId) {
@@ -3110,12 +3809,16 @@
       if (!isSavedChatOpen() && !message.is_favorite && !message.is_forwarded) {
         actions.splice(1, 0, `<button class="sheet-action" onclick="sheetFavorite()"><span>В избранное</span><span class="action-icon">☆</span></button>`);
       }
-      if (mine && !message.is_forwarded && (currentUser?.role !== "reader" || isSavedChatOpen())) {
+      if (!isSavedChatOpen() && message.is_favorite) {
+        actions.splice(1, 0, `<button class="sheet-action" onclick="sheetUnfavorite()"><span>Убрать из избранного</span><span class="action-icon">★</span></button>`);
+      }
+      if (mine && !message.is_forwarded && canCurrentUserSendHere()) {
         actions.push(`<button class="sheet-action" onclick="openEditModal(${message.id})"><span>Редактировать</span><span class="action-icon">✎</span></button>`);
       }
-      const canDeleteMessage = currentUser?.role === "admin" || currentUser?.role === "writer" || (currentUser?.role === "reader" && isSavedChatOpen());
+      const canDeleteMessage = mine || currentChatRole === "owner";
       if (canDeleteMessage) {
-        actions.push(`<button class="sheet-action danger" onclick="confirmDeleteMessage(${message.id})"><span>Удалить из чата</span><span class="action-icon">×</span></button>`);
+        const deleteLabel = isSavedChatOpen() && message.is_forwarded ? "Удалить из избранного" : "Удалить из чата";
+        actions.push(`<button class="sheet-action danger" onclick="confirmDeleteMessage(${message.id})"><span>${deleteLabel}</span><span class="action-icon">×</span></button>`);
       }
       actionSheetActions.innerHTML = actions.join("");
       const source = event?.currentTarget || document.getElementById(`message-${message.id}`);
@@ -3157,6 +3860,12 @@
       await favoriteMessage(messageId);
     }
 
+    async function sheetUnfavorite() {
+      const messageId = actionMessageId;
+      closeActionSheet();
+      await unfavoriteMessage(messageId);
+    }
+
     async function copyMessageText() {
       const message = messageCache.get(actionMessageId);
       if (!message) return;
@@ -3174,10 +3883,15 @@
       catch (error) { show(error.message, false); }
     }
 
+    async function unfavoriteMessage(messageId) {
+      try { await api(`/api/messages/${messageId}/favorite`, { method: "DELETE" }); show("Сообщение убрано из избранного"); await loadMessages(); await loadChats(); }
+      catch (error) { show(error.message, false); }
+    }
+
     function openEditModal(messageId) {
       const message = messageCache.get(messageId);
       if (!message) return;
-      if ((currentUser?.role === "reader" && !isSavedChatOpen()) || message.is_forwarded || message.sender_id !== currentUser?.id) {
+      if (!canCurrentUserSendHere() || message.is_forwarded || message.sender_id !== currentUser?.id) {
         show("Это сообщение нельзя редактировать", false);
         return;
       }
@@ -3217,7 +3931,22 @@
     function appConfirm(title, text, actionText = "Подтвердить") {
       confirmTitle.textContent = title;
       confirmText.textContent = text;
-      confirmButton.textContent = actionText;
+      confirmActions.className = "modal-actions";
+      confirmActions.innerHTML = `
+        <button type="button" class="secondary" onclick="closeConfirmModal(false)">Отмена</button>
+        <button id="confirmButton" type="button" class="primary" onclick="closeConfirmModal(true)">${escapeHtml(actionText)}</button>
+      `;
+      confirmModalBackdrop.classList.add("open");
+      return new Promise(resolve => { confirmResolver = resolve; });
+    }
+
+    function appChoice(title, text, choices) {
+      confirmTitle.textContent = title;
+      confirmText.textContent = text;
+      confirmActions.className = "modal-actions choice-actions";
+      confirmActions.innerHTML = choices.map(choice => `
+        <button type="button" class="${choice.className || "secondary"}" onclick="closeConfirmModal('${escapeAttr(choice.value)}')">${escapeHtml(choice.label)}</button>
+      `).join("");
       confirmModalBackdrop.classList.add("open");
       return new Promise(resolve => { confirmResolver = resolve; });
     }

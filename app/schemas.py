@@ -14,7 +14,6 @@ class UserCreate(BaseModel):
     email: EmailStr
     username: str = Field(min_length=3, max_length=80)
     password: str = Field(min_length=8, max_length=128)
-    role: UserRole = UserRole.writer
 
 
 class UserLogin(BaseModel):
@@ -40,11 +39,11 @@ class UserRead(BaseModel):
 
 
 class UserProfileUpdate(BaseModel):
-    display_name: str | None = Field(default=None, max_length=120)
+    display_name: str | None = Field(default=None, max_length=40)
     avatar_url: str | None = Field(default=None, max_length=2_000_000)
-    city: str | None = Field(default=None, max_length=120)
-    age: int | None = Field(default=None, ge=0, le=130)
-    status_text: str | None = Field(default=None, max_length=160)
+    city: str | None = Field(default=None, max_length=80)
+    age: int | None = Field(default=None, ge=0, le=200)
+    status_text: str | None = Field(default=None, max_length=120)
     is_online: bool = True
 
 
@@ -52,15 +51,29 @@ class UserPresenceUpdate(BaseModel):
     is_online: bool
 
 
+class UserRoleUpdate(BaseModel):
+    role: UserRole
+
+
 class ChatMemberCreate(BaseModel):
     user_id: int
     role: MemberRole = MemberRole.member
+
+
+class ChatMemberUpdate(BaseModel):
+    role: MemberRole
 
 
 class ChatMemberRead(BaseModel):
     user_id: int
     username: str
     email: EmailStr
+    display_name: str | None = None
+    avatar_url: str | None = None
+    city: str | None = None
+    age: int | None = None
+    status_text: str | None = None
+    is_online: bool = True
     app_role: UserRole
     role: MemberRole
     joined_at: datetime
@@ -78,11 +91,14 @@ class ChatRead(BaseModel):
     type: ChatType
     created_by_id: int
     created_at: datetime
+    display_title: str | None = None
+    display_avatar_url: str | None = None
     last_message_body: str | None = None
     last_message_sender_id: int | None = None
     last_message_sender_name: str | None = None
     last_message_status: MessageStatus | None = None
     last_message_created_at: datetime | None = None
+    member_count: int = 0
 
     model_config = {"from_attributes": True}
 
@@ -102,11 +118,14 @@ class MessageRead(BaseModel):
     sender_id: int
     sender_name: str | None = None
     sender_username: str | None = None
+    sender_avatar_url: str | None = None
     reply_to_message_id: int | None = None
     source_chat_id: int | None = None
     source_message_id: int | None = None
     source_chat_title: str | None = None
+    source_sender_id: int | None = None
     source_sender_name: str | None = None
+    source_sender_avatar_url: str | None = None
     is_forwarded: bool = False
     body: str
     status: MessageStatus

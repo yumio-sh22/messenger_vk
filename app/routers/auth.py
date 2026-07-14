@@ -31,7 +31,7 @@ def register(payload: UserCreate, db: Session = Depends(get_db)) -> User:
         email=str(payload.email),
         username=payload.username,
         password_hash=hash_password(payload.password),
-        role=payload.role,
+        role=UserRole.writer,
     )
     db.add(user)
     db.flush()

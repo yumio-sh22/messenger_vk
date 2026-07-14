@@ -4,10 +4,11 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.database import Base, engine
+from app.database import Base, engine, wait_for_database
 from app.migrations import run_lightweight_migrations
 from app.routers import auth, chats, messages, users
 
+wait_for_database()
 Base.metadata.create_all(bind=engine)
 run_lightweight_migrations()
 
