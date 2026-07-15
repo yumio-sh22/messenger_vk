@@ -435,12 +435,12 @@ make logs-db
 
 </div>
 ## Обзор работы приложения
----
-<img width="2876" height="1530" alt="image" src="https://github.com/user-attachments/assets/7f66cbd0-6437-4aea-b4e9-cd6171e640c7" />
-<img width="2876" height="1534" alt="image" src="https://github.com/user-attachments/assets/8454d20c-6b2b-4657-b702-b2e06e62cc83" />
-<img width="1348" height="1502" alt="image" src="https://github.com/user-attachments/assets/2d08b13d-89b1-4f4f-aa7e-f36227a3294e" />
-<img width="2872" height="1542" alt="image" src="https://github.com/user-attachments/assets/a964c4e9-018f-4af5-8203-995690b24df1" />
-<img width="1826" height="1534" alt="image" src="https://github.com/user-attachments/assets/29594d1f-d3d1-466c-8b3f-b5bcd4c806a6" />
+
+<img width="1300" height="1500" alt="image" src="https://github.com/user-attachments/assets/7f66cbd0-6437-4aea-b4e9-cd6171e640c7" />
+<img width="1300" height="1500" alt="image" src="https://github.com/user-attachments/assets/8454d20c-6b2b-4657-b702-b2e06e62cc83" />
+<img width="1300" height="1500" alt="image" src="https://github.com/user-attachments/assets/2d08b13d-89b1-4f4f-aa7e-f36227a3294e" />
+<img width="1300" height="1500" alt="image" src="https://github.com/user-attachments/assets/a964c4e9-018f-4af5-8203-995690b24df1" />
+<img width="1300" height="1500" alt="image" src="https://github.com/user-attachments/assets/29594d1f-d3d1-466c-8b3f-b5bcd4c806a6" />
 
 *С остальным функционалом приложения вы можете ознакомиться непосредственно внутри мессенджера*
 
