@@ -433,14 +433,14 @@ make logs-db
 
 ---
 
-</div>
 ## Обзор работы приложения
 
-<img width="1300" height="1500" alt="image" src="https://github.com/user-attachments/assets/7f66cbd0-6437-4aea-b4e9-cd6171e640c7" />
-<img width="1300" height="1500" alt="image" src="https://github.com/user-attachments/assets/8454d20c-6b2b-4657-b702-b2e06e62cc83" />
-<img width="1300" height="1500" alt="image" src="https://github.com/user-attachments/assets/2d08b13d-89b1-4f4f-aa7e-f36227a3294e" />
-<img width="1300" height="1500" alt="image" src="https://github.com/user-attachments/assets/a964c4e9-018f-4af5-8203-995690b24df1" />
-<img width="1300" height="1500" alt="image" src="https://github.com/user-attachments/assets/29594d1f-d3d1-466c-8b3f-b5bcd4c806a6" />
+<img width="2876" height="1534" alt="Снимок экрана 2026-07-15 143843" src="https://github.com/user-attachments/assets/9b22bbd1-007d-4cba-828c-8d75dc689961" />
+<img width="2876" height="1530" alt="Снимок экрана 2026-07-15 143642" src="https://github.com/user-attachments/assets/f7e19239-4164-429a-81e5-350c295cdf0d" />
+<img width="1348" height="1502" alt="Снимок экрана 2026-07-15 143933" src="https://github.com/user-attachments/assets/a9ca6c7d-7002-4ca4-8720-beced0b5ff3b" />
+<img width="2872" height="1542" alt="Снимок экрана 2026-07-15 144029" src="https://github.com/user-attachments/assets/8cfc4cc7-f206-438b-b629-c445d0c94690" />
+<img width="1826" height="1534" alt="Снимок экрана 2026-07-15 144129" src="https://github.com/user-attachments/assets/02717499-f911-4912-876a-05c8363c7d57" />
+
 
 *С остальным функционалом приложения вы можете ознакомиться непосредственно внутри мессенджера*
 
