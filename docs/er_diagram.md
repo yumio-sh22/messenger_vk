@@ -7,8 +7,6 @@ erDiagram
     USERS ||--o{ CHATS : creates
     CHATS ||--o{ MESSAGES : has
     USERS ||--o{ MESSAGES : sends
-    MESSAGES ||--o{ REACTIONS : has
-    USERS ||--o{ REACTIONS : adds
     MESSAGES ||--o{ ATTACHMENTS : has
     USERS ||--o{ AUDIT_LOGS : produces
 
@@ -48,14 +46,6 @@ erDiagram
         timestamptz edited_at
     }
 
-    REACTIONS {
-        int id PK
-        int message_id FK
-        int user_id FK
-        varchar emoji
-        timestamptz created_at
-    }
-
     ATTACHMENTS {
         int id PK
         int message_id FK
@@ -81,7 +71,6 @@ erDiagram
 - `users` 1:N `messages` - один пользователь отправляет много сообщений.
 - `chats` 1:N `messages` - один чат содержит много сообщений.
 - `users` N:N `chats` через `chat_members`.
-- `messages` 1:N `reactions`.
 - `messages` 1:N `attachments` - одно сообщение может иметь несколько файловых вложений.
 - `users` 1:N `audit_logs`.
 
