@@ -45,6 +45,17 @@ def run_lightweight_migrations() -> None:
         """,
         "CREATE INDEX IF NOT EXISTS ix_message_read_receipts_message_id ON message_read_receipts(message_id)",
         "CREATE INDEX IF NOT EXISTS ix_message_read_receipts_user_id ON message_read_receipts(user_id)",
+        """
+        CREATE TABLE IF NOT EXISTS attachments (
+            id SERIAL PRIMARY KEY,
+            message_id INTEGER NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+            file_name VARCHAR(255) NOT NULL,
+            file_url VARCHAR(1000) NOT NULL,
+            mime_type VARCHAR(120),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS ix_attachments_message_id ON attachments(message_id)",
         "CREATE TABLE IF NOT EXISTS app_migrations (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())",
         """
         UPDATE chat_members AS member

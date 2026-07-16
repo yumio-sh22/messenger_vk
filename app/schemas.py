@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 from app.models import ChatType, MemberRole, MessageStatus, UserRole
 
@@ -103,13 +103,32 @@ class ChatRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class MessageCreate(BaseModel):
-    body: str = Field(min_length=1, max_length=5000)
-    reply_to_message_id: int | None = None
-
-
 class MessageUpdate(BaseModel):
     body: str = Field(min_length=1, max_length=5000)
+
+
+class AttachmentCreate(BaseModel):
+    file_name: str = Field(min_length=1, max_length=255)
+    file_url: str = Field(min_length=1, max_length=1000)
+    mime_type: str | None = Field(default=None, max_length=120)
+
+
+class AttachmentRead(AttachmentCreate):
+    id: int
+
+    model_config = {"from_attributes": True}
+
+
+class MessageCreate(BaseModel):
+    body: str = Field(default="", max_length=5000)
+    reply_to_message_id: int | None = None
+    attachments: list[AttachmentCreate] = Field(default_factory=list, max_length=3)
+
+    @model_validator(mode="after")
+    def validate_content(self) -> "MessageCreate":
+        if not self.body.strip() and not self.attachments:
+            raise ValueError("Сообщение не может быть пустым")
+        return self
 
 
 class MessageRead(BaseModel):
@@ -135,6 +154,7 @@ class MessageRead(BaseModel):
     is_deleted: bool = False
     created_at: datetime
     edited_at: datetime | None = None
+    attachments: list[AttachmentRead] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
 
@@ -142,8 +162,3 @@ class MessageRead(BaseModel):
 class ReactionCreate(BaseModel):
     emoji: str = Field(min_length=1, max_length=16)
 
-
-class AttachmentCreate(BaseModel):
-    file_name: str = Field(min_length=1, max_length=255)
-    file_url: str = Field(min_length=1, max_length=1000)
-    mime_type: str | None = Field(default=None, max_length=120)

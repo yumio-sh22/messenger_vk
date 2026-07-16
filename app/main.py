@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -23,6 +25,8 @@ app.add_middleware(
 )
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+Path("app/uploads").mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="app/uploads"), name="uploads")
 
 app.include_router(auth.router)
 app.include_router(users.router)

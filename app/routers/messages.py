@@ -1,7 +1,9 @@
 from collections import defaultdict, deque
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
+from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, WebSocket, WebSocketDisconnect, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
@@ -22,13 +24,14 @@ from app.models import (
     Reaction,
     User,
 )
-from app.schemas import AttachmentCreate, MessageCreate, MessageRead, MessageUpdate, ReactionCreate
+from app.schemas import AttachmentCreate, AttachmentRead, MessageCreate, MessageRead, MessageUpdate, ReactionCreate
 from app.security import decode_access_token
 from app.ws import manager
 
 router = APIRouter(tags=["messages"])
 send_windows: dict[int, deque[datetime]] = defaultdict(deque)
 SAVED_CHAT_TITLE = "\u0418\u0437\u0431\u0440\u0430\u043d\u043d\u043e\u0435"
+UPLOAD_DIR = Path("app/uploads")
 
 
 def check_rate_limit(user_id: int) -> None:
@@ -141,6 +144,15 @@ def message_read(
     source_sender_name: str | None = None,
     source_sender_avatar_url: str | None = None,
 ) -> MessageRead:
+    attachments = [
+        AttachmentRead(
+            id=attachment.id,
+            file_name=attachment.file_name,
+            file_url=attachment.file_url,
+            mime_type=attachment.mime_type,
+        )
+        for attachment in message.attachments
+    ]
     return MessageRead(
         id=message.id,
         chat_id=message.chat_id,
@@ -164,6 +176,7 @@ def message_read(
         is_deleted=message.is_deleted,
         created_at=message.created_at,
         edited_at=message.edited_at,
+        attachments=attachments,
     )
 
 
@@ -335,6 +348,10 @@ async def send_message(
     member = require_chat_member(db, chat_id, user)
     ensure_can_write(member)
     check_rate_limit(user.id)
+    if len(payload.attachments) > 3:
+        raise HTTPException(status_code=400, detail="К сообщению можно прикрепить не больше 3 файлов")
+    if payload.attachments and len(payload.body.split()) > 200:
+        raise HTTPException(status_code=400, detail="К файлам можно добавить не больше 200 слов")
 
     if payload.reply_to_message_id:
         parent = db.get(Message, payload.reply_to_message_id)
@@ -345,11 +362,20 @@ async def send_message(
         chat_id=chat_id,
         sender_id=user.id,
         reply_to_message_id=payload.reply_to_message_id,
-        body=payload.body,
+        body=payload.body.strip() or "\u2060",
         status=MessageStatus.sent,
     )
     db.add(message)
     db.flush()
+    for attachment in payload.attachments:
+        db.add(
+            Attachment(
+                message_id=message.id,
+                file_name=attachment.file_name,
+                file_url=attachment.file_url,
+                mime_type=attachment.mime_type,
+            )
+        )
     db.add(MessageReadReceipt(message_id=message.id, user_id=user.id))
     write_audit(db, user.id, "send_message", "message", message.id)
     db.commit()
@@ -481,6 +507,15 @@ def add_to_favorites(
     )
     db.add(saved_copy)
     db.flush()
+    for attachment in message.attachments:
+        db.add(
+            Attachment(
+                message_id=saved_copy.id,
+                file_name=attachment.file_name,
+                file_url=attachment.file_url,
+                mime_type=attachment.mime_type,
+            )
+        )
     db.add(MessageReadReceipt(message_id=saved_copy.id, user_id=user.id))
     write_audit(db, user.id, "favorite_message", "message", message.id)
     db.commit()
@@ -527,6 +562,25 @@ def add_reaction(
         write_audit(db, user.id, "add_reaction", "message", message_id, payload.emoji)
         db.commit()
     return {"status": "ok"}
+
+
+@router.post("/api/uploads", response_model=AttachmentCreate, status_code=status.HTTP_201_CREATED)
+async def upload_file(
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+) -> AttachmentCreate:
+    original_name = Path(file.filename or "file").name[:255] or "file"
+    suffix = Path(original_name).suffix[:20]
+    stored_name = f"{uuid4().hex}{suffix}"
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    target = UPLOAD_DIR / stored_name
+    content = await file.read()
+    target.write_bytes(content)
+    return AttachmentCreate(
+        file_name=original_name,
+        file_url=f"/uploads/{stored_name}",
+        mime_type=file.content_type,
+    )
 
 
 @router.post("/api/messages/{message_id}/attachments", status_code=status.HTTP_201_CREATED)

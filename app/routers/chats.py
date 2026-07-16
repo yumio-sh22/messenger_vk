@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.audit import write_audit
 from app.database import get_db
 from app.deps import get_current_user, require_chat_member
-from app.models import Chat, ChatMember, ChatType, MemberRole, Message, MessageReadReceipt, MessageStatus, User
+from app.models import Attachment, Chat, ChatMember, ChatType, MemberRole, Message, MessageReadReceipt, MessageStatus, User
 from app.schemas import ChatCreate, ChatMemberCreate, ChatMemberRead, ChatMemberUpdate, ChatRead
 
 router = APIRouter(prefix="/api/chats", tags=["chats"])
@@ -89,11 +89,14 @@ def chat_preview(db: Session, chat: Chat, user: User | None = None) -> ChatRead:
         return data
 
     message, sender = row
-    last_body = message.body
+    has_attachments = bool(db.scalar(select(Attachment.id).where(Attachment.message_id == message.id).limit(1)))
+    last_body = "Файл" if message.body == "\u2060" and has_attachments else message.body
     if chat.title == "Избранное" and message.reply_to_message_id:
-        source_body = db.scalar(select(Message.body).where(Message.id == message.reply_to_message_id))
+        source = db.get(Message, message.reply_to_message_id)
+        source_has_attachments = bool(source and db.scalar(select(Attachment.id).where(Attachment.message_id == source.id).limit(1)))
+        source_body = source.body if source else None
         if source_body:
-            last_body = source_body
+            last_body = "Файл" if source_body == "\u2060" and source_has_attachments else source_body
     return ChatRead(
         id=chat.id,
         title=chat.title,

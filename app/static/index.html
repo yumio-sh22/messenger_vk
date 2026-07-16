@@ -33,6 +33,17 @@
         linear-gradient(180deg, #f8fbff 0%, var(--bg) 52%, #eef4ff 100%);
       color: var(--text);
     }
+    body.app-mode {
+      height: 100vh;
+      overflow: hidden;
+    }
+    body.app-mode .shell:not(.hidden) {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      max-height: 100vh;
+    }
     body::before {
       content: "";
       position: fixed;
@@ -61,7 +72,7 @@
     .secondary { min-height: 40px; border-radius: 12px; padding: 0 12px; color: var(--text); background: #eef2f7; font-weight: 700; }
     .secondary:hover { background: #e4e9f1; }
     .link-button { background: transparent; color: var(--accent); padding: 0; font-weight: 700; }
-    .shell { height: 100vh; display: grid; grid-template-columns: 328px 1fr; gap: 14px; overflow: hidden; padding: 14px; }
+    .shell { height: 100vh; max-height: 100vh; display: grid; grid-template-columns: 328px 1fr; gap: 14px; overflow: hidden; padding: 14px; }
     .sidebar { position: relative; background: var(--panel-soft); border: 1px solid rgba(216,222,233,.82); border-radius: 24px; padding: 16px; display: grid; grid-template-rows: auto 1fr auto; gap: 14px; min-width: 0; box-shadow: var(--shadow-soft); backdrop-filter: blur(16px); overflow: hidden; }
     .sidebar::before {
       content: "";
@@ -131,8 +142,8 @@
     .presence { display: inline-flex; align-items: center; gap: 5px; color: rgba(102,112,133,.84); font-size: 12px; margin-top: 5px; }
     .presence-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--offline); box-shadow: 0 0 0 3px rgba(239,68,68,.12); }
     .presence.online .presence-dot { background: var(--ok); box-shadow: 0 0 0 3px rgba(5,166,107,.14); }
-    .workspace { display: grid; grid-template-rows: auto 1fr auto; min-width: 0; background: rgba(248,250,252,.78); border: 1px solid rgba(216,222,233,.82); border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-soft); backdrop-filter: blur(14px); }
-    .topbar { min-height: 80px; padding: 16px 22px; display: grid; grid-template-columns: 1fr minmax(240px,380px); gap: 16px; align-items: center; background: rgba(255,255,255,.78); border-bottom: 1px solid rgba(216,222,233,.82); backdrop-filter: blur(14px); }
+    .workspace { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-width: 0; min-height: 0; height: 100%; background: rgba(248,250,252,.78); border: 1px solid rgba(216,222,233,.82); border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-soft); backdrop-filter: blur(14px); }
+    .topbar { position: relative; z-index: 3; min-height: 80px; padding: 16px 22px; display: grid; grid-template-columns: 1fr minmax(240px,380px); gap: 16px; align-items: center; background: rgba(255,255,255,.78); border-bottom: 1px solid rgba(216,222,233,.82); backdrop-filter: blur(14px); overflow: visible; }
     .chat-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
     .chat-heading-main { min-width: 0; }
     .chat-title { font-size: 22px; font-weight: 900; }
@@ -140,7 +151,7 @@
     .chat-tool-button { min-height: 36px; border-radius: 999px; padding: 0 13px; color: var(--accent); background: rgba(239,246,255,.9); border: 1px solid #bfdbfe; font-size: 13px; font-weight: 800; }
     .chat-tool-button:hover { background: #dbeafe; box-shadow: 0 10px 22px rgba(37,99,235,.12); }
     .search-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
-    .messages { padding: 24px; overflow: auto; background: radial-gradient(circle at 78% 8%, rgba(37,99,235,.08), transparent 26%), linear-gradient(180deg, rgba(255,255,255,.20), rgba(239,246,255,.34)); }
+    .messages { min-height: 0; padding: 24px; overflow: auto; background: radial-gradient(circle at 78% 8%, rgba(37,99,235,.08), transparent 26%), linear-gradient(180deg, rgba(255,255,255,.20), rgba(239,246,255,.34)); }
     .load-older { display: flex; justify-content: center; margin: 0 0 14px; }
     .load-older button { width: auto; min-height: 34px; border-radius: 999px; padding: 0 14px; color: var(--accent); background: rgba(239,246,255,.9); border: 1px solid #bfdbfe; font-weight: 800; }
     .load-older button:hover { background: #dbeafe; box-shadow: 0 10px 22px rgba(37,99,235,.12); }
@@ -822,6 +833,8 @@
     }
     .messages {
       padding: 30px 28px;
+      overscroll-behavior: contain;
+      scroll-padding-block: 90px 120px;
     }
     .message {
       max-width: min(680px, 68%);
@@ -2396,10 +2409,204 @@
     }
     .message.mine { padding-top: 14px; }
     .message.mine .sender-name { display: none; }
+    .composer-files {
+      display: none;
+      gap: 8px;
+      margin: 0 0 10px;
+      flex-wrap: wrap;
+    }
+    .composer-files.active { display: flex; }
+    .composer-file-chip,
+    .message-attachment {
+      display: inline-grid;
+      grid-template-columns: 38px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      min-width: min(260px, 100%);
+      max-width: min(420px, 100%);
+      border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--line));
+      border-radius: 16px;
+      padding: 8px 10px;
+      background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+      color: var(--text);
+      text-decoration: none;
+      box-shadow: 0 10px 24px rgba(109,40,217,.08);
+    }
+    .file-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 13px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #a78bfa, #6d28d9);
+      color: white;
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .file-info { min-width: 0; display: grid; gap: 2px; }
+    .file-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 800;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+    .file-meta {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.15;
+      text-transform: uppercase;
+    }
+    .file-remove {
+      width: 24px;
+      height: 24px;
+      min-height: 0;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      color: var(--accent);
+      font-weight: 900;
+    }
+    .file-remove:hover {
+      color: var(--danger);
+      border-color: color-mix(in srgb, var(--danger) 40%, var(--line));
+      background: rgba(220,38,38,.08);
+      transform: none;
+    }
+    .message-attachments {
+      display: grid;
+      gap: 8px;
+      margin: 0 0 10px;
+      max-width: 100%;
+    }
+    .message-attachment {
+      grid-template-columns: 38px minmax(0, 1fr) 18px;
+      width: min(100%, 440px);
+    }
+    .message-attachment::after {
+      content: "↗";
+      color: var(--accent);
+      font-weight: 900;
+      opacity: .8;
+      justify-self: center;
+    }
+    .message-attachment:hover {
+      border-color: color-mix(in srgb, var(--accent) 58%, var(--line));
+      background: color-mix(in srgb, var(--accent) 12%, var(--panel));
+      transform: translateY(-1px);
+    }
+    .attach-button {
+      width: 46px;
+      height: 46px;
+      min-height: 0;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--accent);
+      display: grid;
+      place-items: center;
+      padding: 0;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
+    }
+    .attach-button svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+    .attach-button:hover {
+      border-color: color-mix(in srgb, var(--accent) 58%, var(--line));
+      box-shadow: 0 10px 24px rgba(109,40,217,.14);
+      transform: translateY(-1px);
+    }
+    .composer .composer-row {
+      grid-template-columns: 46px minmax(0, 1fr) 46px;
+      align-items: center;
+    }
+    .composer.readonly .attach-button { display: none; }
+    .composer.readonly .composer-row { grid-template-columns: minmax(0, 1fr) auto; }
+    body[data-theme="dark"] .composer-file-chip,
+    body[data-theme="dark"] .message-attachment {
+      background: rgba(167,139,250,.12);
+      border-color: rgba(196,181,253,.30);
+    }
+    body[data-theme="dark"] .attach-button,
+    body[data-theme="dark"] .file-remove {
+      background: rgba(30,24,48,.92);
+      border-color: rgba(196,181,253,.28);
+      color: #ddd6fe;
+    }
+    /* Final app layout guard: keep the chat header fixed when jumping to a message. */
+    body.app-mode {
+      height: 100vh;
+      overflow: hidden;
+    }
+    body.app-mode #appPage.shell:not(.hidden) {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      max-height: 100vh;
+      overflow: hidden;
+    }
+    body.app-mode .workspace {
+      height: calc(100vh - 36px);
+      min-height: 0;
+      align-self: stretch;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      overflow: hidden;
+    }
+    body.app-mode .topbar {
+      position: relative;
+      z-index: 5;
+      min-height: 86px;
+      padding-top: 15px;
+      padding-bottom: 15px;
+      overflow: visible;
+      align-self: start;
+    }
+    body.app-mode .chat-heading {
+      min-height: 56px;
+      align-items: center;
+      overflow: visible;
+      transform: none;
+    }
+    body.app-mode .chat-header-avatar {
+      flex: 0 0 54px;
+      width: 54px;
+      height: 54px;
+      min-width: 54px;
+      min-height: 54px;
+      border-radius: 50%;
+      overflow: hidden;
+      transform: none;
+    }
+    body.app-mode .messages {
+      min-height: 0;
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      scroll-padding-block: 100px 130px;
+    }
     .hidden { display: none !important; }
     @media (max-width: 760px) {
       .message-content-row { flex-wrap: wrap; }
       .message-content-row .meta-right { width: 100%; text-align: right; }
+      .composer .composer-row { grid-template-columns: 42px minmax(0, 1fr) 42px; }
+      .attach-button { width: 42px; height: 42px; }
     }
   </style>
 </head>
@@ -2553,10 +2760,15 @@
       <div id="messages" class="messages"><div class="empty">Выберите чат слева или откройте «Избранное» в меню.</div></div>
       <footer class="composer">
         <div id="replyBox" class="reply-box"><span id="replyText"></span><button class="tiny" onclick="clearReply()">Отмена</button></div>
+        <div id="composerFiles" class="composer-files"></div>
         <div class="composer-row">
+          <button id="attachButton" type="button" class="attach-button" onclick="openFilePicker()" title="Прикрепить файл" aria-label="Прикрепить файл">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 11.6 12 21a6 6 0 0 1-8.5-8.5l10-10a4 4 0 0 1 5.7 5.7L9.1 18.3a2 2 0 0 1-2.8-2.8l9.4-9.4"/></svg>
+          </button>
           <input id="messageBody" maxlength="5000" placeholder="Сообщение" onkeydown="if(event.key === 'Enter') sendMessage()">
           <button id="sendMessageButton" class="primary" onclick="sendMessage()">Отправить</button>
         </div>
+        <input id="messageFilesInput" class="visually-hidden-file" type="file" multiple onchange="handleMessageFiles(event)">
       </footer>
     </main>
   </div>
@@ -2656,6 +2868,10 @@
     let chatSearchHits = new Map();
     let chatSearchLoading = false;
     const MESSAGE_PAGE_SIZE = 50;
+    const MAX_MESSAGE_FILES = 3;
+    const MAX_FILE_MESSAGE_WORDS = 200;
+    let selectedMessageFiles = [];
+    let fileWordLimitWasExceeded = false;
     const selectedContactIds = new Set();
     let selectedMemberContactId = null;
     const messageCache = new Map();
@@ -2687,6 +2903,9 @@
     const backFromSearch = document.getElementById("backFromSearch");
     const messageBody = document.getElementById("messageBody");
     const sendMessageButton = document.getElementById("sendMessageButton");
+    const attachButton = document.getElementById("attachButton");
+    const messageFilesInput = document.getElementById("messageFilesInput");
+    const composerFiles = document.getElementById("composerFiles");
     const replyBox = document.getElementById("replyBox");
     const replyText = document.getElementById("replyText");
     const chatModalBackdrop = document.getElementById("chatModalBackdrop");
@@ -2731,6 +2950,7 @@
     menuPanel.addEventListener("click", event => {
       if (event.target.closest(".menu-item")) closeMenu();
     });
+    messageBody.addEventListener("input", validateFileMessageWords);
     renderRoute();
 
     function go(path) { history.pushState({}, "", path); renderRoute(); }
@@ -2756,6 +2976,7 @@
 
     async function renderRoute() {
       Object.values(pages).forEach(page => page.classList.add("hidden"));
+      document.body.classList.toggle("app-mode", location.pathname === "/app");
       if (location.pathname === "/register") return pages.register.classList.remove("hidden");
       if (location.pathname === "/profile") {
         if (!token) return go("/login");
@@ -2766,6 +2987,7 @@
       if (location.pathname === "/app") {
         if (!token) return go("/login");
         pages.app.classList.remove("hidden");
+        window.scrollTo(0, 0);
         await bootApp();
         return;
       }
@@ -2836,6 +3058,7 @@
       closeActionSheet();
       closeMembersModal();
       clearReply();
+      clearSelectedFiles();
       chatSearch.value = "";
       search.value = "";
       backFromSearch.classList.add("hidden");
@@ -2903,7 +3126,9 @@
       const readonlyChat = !!currentChat && !canSend;
       composer.classList.toggle("readonly", readonlyChat);
       messageBody.disabled = !canSend;
+      attachButton.disabled = !canSend;
       sendMessageButton.disabled = false;
+      if (!canSend) clearSelectedFiles();
       if (!currentChat) {
         messageBody.placeholder = "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0447\u0430\u0442";
         sendMessageButton.textContent = "Отправить";
@@ -3612,6 +3837,7 @@
       currentChatMemberCount = cachedChat?.member_count || 0;
       currentChatRole = "";
       clearReply();
+      clearSelectedFiles();
       exitSearch(false);
       chatName.textContent = cachedChat?.display_title || currentChatTitle;
       if (cachedChat?.display_avatar_url) {
@@ -3634,7 +3860,12 @@
       await loadMessages(anchorId);
       await loadChats();
       connectSocket();
-      if (anchorId) highlightMessage(anchorId);
+      if (anchorId) {
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        highlightMessage(anchorId);
+      }
     }
 
     async function updateDirectChatHeader() {
@@ -3654,7 +3885,7 @@
       const messages = await api(url);
       loadedMessages = messages;
       canLoadOlder = messages.length === MESSAGE_PAGE_SIZE;
-      renderMessages(loadedMessages);
+      renderMessages(loadedMessages, !anchorId);
     }
 
     async function loadOlderMessages() {
@@ -3691,10 +3922,129 @@
       return `<span class="message-avatar">${escapeHtml(initials(name))}</span>`;
     }
 
+    function openFilePicker() {
+      if (!currentChat || !canCurrentUserSendHere()) return;
+      messageFilesInput.click();
+    }
+
+    function wordCount(text) {
+      return text.trim().split(/\s+/).filter(Boolean).length;
+    }
+
+    function fileIconLabel(fileName) {
+      const parts = String(fileName || "").split(".");
+      const ext = parts.length > 1 ? parts.pop() : "file";
+      return ext && ext.length <= 4 ? ext.toUpperCase() : "FILE";
+    }
+
+    function fileBaseName(fileName) {
+      const name = String(fileName || "Файл");
+      const dot = name.lastIndexOf(".");
+      return dot > 0 ? name.slice(0, dot) : name;
+    }
+
+    function fileFormatLabel(fileName) {
+      const name = String(fileName || "");
+      const dot = name.lastIndexOf(".");
+      return dot >= 0 && dot < name.length - 1 ? `.${name.slice(dot + 1).toUpperCase()}` : "ФАЙЛ";
+    }
+
+    function fileDuplicateKey(file) {
+      return `${file.name}|${file.size}|${file.lastModified}`;
+    }
+
+    function validateFileMessageWords() {
+      const exceeded = selectedMessageFiles.length > 0 && wordCount(messageBody.value) > MAX_FILE_MESSAGE_WORDS;
+      if (exceeded && !fileWordLimitWasExceeded) {
+        showToast("К файлам можно добавить не больше 200 слов", false);
+      }
+      fileWordLimitWasExceeded = exceeded;
+      return !exceeded;
+    }
+
+    function renderComposerFiles() {
+      composerFiles.classList.toggle("active", selectedMessageFiles.length > 0);
+      composerFiles.innerHTML = selectedMessageFiles.map((file, index) => `
+        <div class="composer-file-chip" title="${escapeAttr(file.name)}">
+          <span class="file-icon">${escapeHtml(fileIconLabel(file.name))}</span>
+          <span class="file-info">
+            <span class="file-name">${escapeHtml(fileBaseName(file.name))}</span>
+            <span class="file-meta">${escapeHtml(fileFormatLabel(file.name))}</span>
+          </span>
+          <button type="button" class="file-remove" onclick="removeSelectedFile(${index})" aria-label="Убрать файл">×</button>
+        </div>
+      `).join("");
+      validateFileMessageWords();
+    }
+
+    function handleMessageFiles(event) {
+      const incoming = Array.from(event.target.files || []);
+      const keys = new Set(selectedMessageFiles.map(fileDuplicateKey));
+      for (const file of incoming) {
+        if (keys.has(fileDuplicateKey(file))) {
+          showToast("Этот файл уже прикреплён", false);
+          continue;
+        }
+        if (selectedMessageFiles.length >= MAX_MESSAGE_FILES) {
+          showToast("К одному сообщению можно прикрепить не больше 3 файлов", false);
+          break;
+        }
+        selectedMessageFiles.push(file);
+        keys.add(fileDuplicateKey(file));
+      }
+      messageFilesInput.value = "";
+      renderComposerFiles();
+    }
+
+    function removeSelectedFile(index) {
+      selectedMessageFiles.splice(index, 1);
+      renderComposerFiles();
+    }
+
+    function clearSelectedFiles() {
+      selectedMessageFiles = [];
+      fileWordLimitWasExceeded = false;
+      if (messageFilesInput) messageFilesInput.value = "";
+      if (composerFiles) {
+        composerFiles.innerHTML = "";
+        composerFiles.classList.remove("active");
+      }
+    }
+
+    async function uploadMessageFile(file) {
+      const form = new FormData();
+      form.append("file", file);
+      const response = await fetch("/api/uploads", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.detail || "Не удалось загрузить файл");
+      }
+      return response.json();
+    }
+
+    function renderAttachments(attachments = []) {
+      if (!attachments.length) return "";
+      return `<div class="message-attachments">${attachments.map(attachment => `
+        <a class="message-attachment" href="${escapeAttr(attachment.file_url)}" target="_blank" rel="noopener" title="${escapeAttr(attachment.file_name)}">
+          <span class="file-icon">${escapeHtml(fileIconLabel(attachment.file_name))}</span>
+          <span class="file-info">
+            <span class="file-name">${escapeHtml(fileBaseName(attachment.file_name))}</span>
+            <span class="file-meta">${escapeHtml(fileFormatLabel(attachment.file_name))}</span>
+          </span>
+        </a>
+      `).join("")}</div>`;
+    }
+
     function renderMessage(message) {
       const visualSenderId = message.is_forwarded && message.source_sender_id ? message.source_sender_id : message.sender_id;
       const mine = currentUser && visualSenderId === currentUser.id;
       const reply = !message.is_forwarded && message.reply_to_message_id ? messageCache.get(message.reply_to_message_id) : null;
+      const cleanBody = message.body === "\u2060" ? "" : message.body;
+      const replyBody = reply ? (reply.body === "\u2060" ? "файл" : reply.body) : "";
       const senderName = message.is_forwarded && message.source_sender_name
         ? message.source_sender_name
         : message.sender_name || message.sender_username || `user #${message.sender_id}`;
@@ -3707,7 +4057,8 @@
       const menu = message.is_deleted ? "" : `<button class="message-menu-button" title="Действия" onclick="openActionSheet(event, ${message.id})">⋯</button>`;
       const avatarUrl = message.is_forwarded && message.source_sender_avatar_url ? message.source_sender_avatar_url : message.sender_avatar_url;
       const avatar = mine ? "" : messageAvatarHtml(senderName, avatarUrl);
-      const content = `${source}${senderLabel}${reply ? `<div class="reply-preview">Ответ на: ${escapeHtml(reply.body)}</div>` : ""}<div class="message-content-row"><div class="message-text">${escapeHtml(message.body)}</div>${meta}</div>`;
+      const textHtml = cleanBody.trim() ? `<div class="message-text">${escapeHtml(cleanBody)}</div>` : "";
+      const content = `${source}${senderLabel}${reply ? `<div class="reply-preview">Ответ на: ${escapeHtml(replyBody)}</div>` : ""}${renderAttachments(message.attachments || [])}<div class="message-content-row">${textHtml}${meta}</div>`;
       return `<article class="message ${mine ? "mine" : ""} ${message.is_deleted ? "deleted" : ""}" id="message-${message.id}">${avatar}${content}${menu}</article>`;
     }
 
@@ -3725,16 +4076,38 @@
     }
 
     function highlightMessage(messageId) {
-      setTimeout(() => {
+      const run = () => {
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
         const target = document.getElementById(`message-${messageId}`);
         if (!target) {
           showToast("Исходное сообщение не найдено в загруженной истории", false);
           return;
         }
-        target.scrollIntoView({ block: "center", behavior: "smooth" });
+        scrollMessageIntoView(target, "auto");
         target.classList.add("source-highlight");
         setTimeout(() => target.classList.remove("source-highlight"), 1000);
-      }, 80);
+      };
+      requestAnimationFrame(run);
+      setTimeout(run, 80);
+    }
+
+    function scrollMessageIntoView(target, behavior = "smooth") {
+      const containerRect = messagesBox.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const topWithPadding = messagesBox.scrollTop
+        + targetRect.top
+        - containerRect.top
+        - Math.max(72, Math.min(140, messagesBox.clientHeight * 0.18));
+      const centeredTop = messagesBox.scrollTop
+        + targetRect.top
+        - containerRect.top
+        - (messagesBox.clientHeight - targetRect.height) / 2;
+      messagesBox.scrollTo({
+        top: Math.max(0, Math.min(centeredTop, topWithPadding)),
+        behavior,
+      });
     }
 
     async function sendMessage() {
@@ -3743,13 +4116,29 @@
         await openSavedChat();
         return;
       }
-      if (!messageBody.value.trim()) return;
+      const text = messageBody.value.trim();
+      if (!text && !selectedMessageFiles.length) return;
+      if (selectedMessageFiles.length && !validateFileMessageWords()) return;
       try {
-        await api(`/api/chats/${currentChat}/messages`, { method: "POST", body: JSON.stringify({ body: messageBody.value, reply_to_message_id: replyToMessage ? replyToMessage.id : null }) });
+        sendMessageButton.disabled = true;
+        const attachments = [];
+        for (const file of selectedMessageFiles) {
+          attachments.push(await uploadMessageFile(file));
+        }
+        await api(`/api/chats/${currentChat}/messages`, {
+          method: "POST",
+          body: JSON.stringify({
+            body: text,
+            reply_to_message_id: replyToMessage ? replyToMessage.id : null,
+            attachments,
+          }),
+        });
         messageBody.value = "";
+        clearSelectedFiles();
         clearReply();
         await loadChats();
       } catch (error) { show(error.message, false); }
+      finally { sendMessageButton.disabled = false; }
     }
 
     async function searchMessages() {
@@ -3776,7 +4165,8 @@
     function startReply(messageId) {
       replyToMessage = messageCache.get(messageId);
       if (!replyToMessage) return;
-      replyText.textContent = `Ответ на: ${replyToMessage.body}`;
+      const replyBody = replyToMessage.body === "\u2060" ? "файл" : replyToMessage.body;
+      replyText.textContent = `Ответ на: ${replyBody}`;
       replyBox.classList.add("active");
       messageBody.focus();
     }
@@ -3799,7 +4189,7 @@
       closeActionSheet();
       actionMessageId = messageId;
       const mine = currentUser && message.sender_id === currentUser.id;
-      actionSheetTitle.textContent = message.body;
+      actionSheetTitle.textContent = message.body === "\u2060" ? "Файловое сообщение" : message.body;
       const actions = [
         `<button class="sheet-action" onclick="copyMessageText()"><span>\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0442\u0435\u043a\u0441\u0442</span><span class="action-icon">\u29c9</span></button>`,
       ];
@@ -3870,6 +4260,10 @@
       const message = messageCache.get(actionMessageId);
       if (!message) return;
       closeActionSheet();
+      if (message.body === "\u2060" || !message.body.trim()) {
+        show("В этом сообщении нет текста для копирования", false);
+        return;
+      }
       try {
         await navigator.clipboard.writeText(message.body);
         show("Текст сообщения скопирован");

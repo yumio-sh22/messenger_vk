@@ -8,3 +8,5 @@ __pycache__/
 postgres_data/
 *.log
 tmp/
+app/uploads/*
+!app/uploads/.gitkeep
